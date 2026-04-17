@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VANTTAGE
 
-## Getting Started
+Plataforma SaaS multi-tenant para barberias construida con Next.js 14, TypeScript, Prisma, PostgreSQL/Supabase y NextAuth.
 
-First, run the development server:
+## Arquitectura respetada
+
+- `app/(booking)` contiene la experiencia del cliente final.
+- `app/(admin)` contiene el panel de la barberia.
+- `app/(superadmin)` contiene el backoffice de VANTTAGE.
+- `src/components/admin` concentra la UI reutilizable del dashboard.
+- `src/lib` concentra infraestructura: auth, tenant, prisma, whatsapp.
+- `src/jobs` concentra automatizaciones para Vercel Cron.
+- `prisma/schema.prisma` es la fuente de verdad del modelo de datos.
+
+## Rutas principales
+
+- `/` muestra la landing comercial de VANTTAGE.
+- `/reservar` expone el flujo publico de reservas.
+- `/dashboard` expone el panel operativo de la barberia.
+- `/superadmin` expone el backoffice interno.
+- En subdominios tenant como `demo.vanttage.app`, la raiz `/` redirige automaticamente a `/reservar`.
+
+## Multi-tenant
+
+La aplicacion resuelve el tenant por subdominio mediante `src/middleware.ts` y `src/lib/tenant.ts`.
+
+- `tenantId` identifica la cuenta SaaS.
+- `barbershopId` identifica la sede operativa.
+- Toda consulta operativa debe filtrar por ambos campos.
+
+## Modelo de datos
+
+El esquema cubre:
+
+- `tenants`
+- `barbershops`
+- `users`
+- `barbershop_memberships`
+- `barbers`
+- `service_categories`
+- `services`
+- `clients`
+- `appointments`
+- `appointment_history`
+- `payments`
+- `notifications`
+- `password_reset_tokens`
+- `barber_schedules`
+
+La migracion inicial vive en [prisma/migrations/20260317052621_init/migration.sql](/c:/dev/VANTTAGE/vanttage_peluquerias/prisma/migrations/20260317052621_init/migration.sql).
+
+## Variables de entorno
+
+Usa `.env.example` como plantilla y define al menos:
+
+- `DATABASE_URL`
+- `DIRECT_URL`
+- `NEXTAUTH_URL`
+- `NEXTAUTH_SECRET`
+- `NEXT_PUBLIC_BASE_DOMAIN`
+- `VANTTAGE_DEV_TENANT`
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run typecheck
+npm run build
+npm run validate
+npm run db:generate
+npm run db:migrate
+npm run db:seed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Produccion
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Configura PostgreSQL o Supabase.
+2. Carga variables de entorno en Vercel.
+3. Ejecuta migraciones con Prisma.
+4. Ejecuta `npm run db:seed` solo en ambientes de demo o staging.
+5. Despliega en Vercel.
+6. Verifica que `vercel.json` active los cron jobs de reminders, reactivation y weekly report.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estado actual
 
-## Learn More
+- Build de produccion validado con `npm run build`.
+- Typecheck validado con `npx tsc --noEmit`.
+- El rol autenticado oficial quedo alineado a `client | owner | superadmin`.
+- Se corrigio la ubicacion del modulo `superadmin` y de los componentes admin reutilizables.
 
-To learn more about Next.js, take a look at the following resources:
+## Nota de compatibilidad
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+La arquitectura original sugeria `next.config.ts`, pero Next.js 14.2.29 falla en build con ese formato. Se mantuvo `next.config.mjs` como excepcion tecnica minima para conservar compatibilidad real de produccion.

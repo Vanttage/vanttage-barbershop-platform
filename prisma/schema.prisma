@@ -1,0 +1,469 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Plan {
+  basico
+  pro
+  premium
+}
+
+enum AppointmentStatus {
+  pending
+  confirmed
+  in_progress
+  completed
+  cancelled
+}
+
+enum UserRole {
+  client
+  owner
+  superadmin
+}
+
+enum MembershipRole {
+  owner
+  manager
+}
+
+enum PaymentMethod {
+  cash
+  transfer
+  card
+  nequi
+  daviplata
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum NotificationChannel {
+  whatsapp
+  email
+  push
+}
+
+enum NotificationType {
+  appointment_confirmed
+  appointment_reminder
+  appointment_cancelled
+  payment_received
+  marketing
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+}
+
+model Tenant {
+  id                  String    @id @default(uuid())
+  name                String
+  slug                String    @unique
+  plan                Plan      @default(pro)
+  active              Boolean   @default(true)
+  logoUrl             String?
+  primaryColor        String    @default("#B6862C")
+  phoneWa             String?
+  email               String?
+  address             String?
+  city                String?
+  googlePlaceId       String?
+  waPhoneId           String?
+  waToken             String?
+  trialEndsAt         DateTime?
+  primaryBarbershopId String?   @unique
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // ── Automation toggles ───────────────────────────────────────────
+  autoConfirmacion    Boolean   @default(true)
+  autoReminder24h     Boolean   @default(true)
+  autoReminder1h      Boolean   @default(true)
+  autoReviewRequest   Boolean   @default(false)
+  autoReactivacion    Boolean   @default(false)
+  autoWeeklyReport    Boolean   @default(true)
+
+  primaryBarbershop   Barbershop?            @relation("PrimaryBarbershop", fields: [primaryBarbershopId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  barbershops         Barbershop[]           @relation("TenantBarbershops")
+  users               User[]
+  memberships         BarbershopMembership[]
+  barbers             Barber[]
+  serviceCategories   ServiceCategory[]
+  services            Service[]
+  clients             Client[]
+  appointments        Appointment[]
+  appointmentHistory  AppointmentHistory[]
+  payments            Payment[]
+  notifications       Notification[]
+  passwordResetTokens PasswordResetToken[]
+  Schedule            Schedule[]
+
+  @@map("tenants")
+}
+
+model Barbershop {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  slug        String
+  description String?
+  logoUrl     String?
+  bannerUrl   String?
+  address     String?
+  city        String?
+  country     String?  @default("Colombia")
+  phone       String?
+  whatsapp    String?
+  instagram   String?
+  openingTime String?  @default("09:00")
+  closingTime String?  @default("19:00")
+  timezone    String   @default("America/Bogota")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant           Tenant                 @relation("TenantBarbershops", fields: [tenantId], references: [id], onDelete: Cascade)
+  primaryForTenant Tenant?                @relation("PrimaryBarbershop")
+  defaultUsers     User[]                 @relation("DefaultBarbershopUsers")
+  memberships      BarbershopMembership[]
+  barbers          Barber[]
+  schedules        Schedule[]
+  services         Service[]
+  clients          Client[]
+  appointments     Appointment[]
+  payments         Payment[]
+  notifications    Notification[]
+  favorites        FavoriteBarber[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, active])
+  @@map("barbershops")
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  tenantId            String?
+  defaultBarbershopId String?
+  email               String    @unique
+  passwordHash        String
+  name                String
+  role                UserRole  @default(client)
+  avatarUrl           String?
+  phone               String?
+  active              Boolean   @default(true)
+  emailVerifiedAt     DateTime?
+  lastLoginAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  tenant              Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  defaultBarbershop   Barbershop?            @relation("DefaultBarbershopUsers", fields: [defaultBarbershopId], references: [id], onDelete: SetNull)
+  memberships         BarbershopMembership[]
+  barberProfile       Barber?
+  clientProfile       Client?
+  passwordResetTokens PasswordResetToken[]
+  historyEntries      AppointmentHistory[]   @relation("HistoryActor")
+
+  @@index([tenantId])
+  @@index([defaultBarbershopId])
+  @@map("users")
+}
+
+model BarbershopMembership {
+  id           String         @id @default(uuid())
+  tenantId     String
+  barbershopId String
+  userId       String
+  role         MembershipRole
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, barbershopId])
+  @@index([tenantId, barbershopId, role])
+  @@map("barbershop_memberships")
+}
+
+model Barber {
+  id              String   @id @default(uuid())
+  tenantId        String
+  barbershopId    String
+  userId          String?  @unique
+  name            String
+  specialty       String?
+  experienceYears Int      @default(0)
+  photoUrl        String?
+  bio             String?
+  phone           String?
+  active          Boolean  @default(true)
+  rating          Float    @default(5)
+  orderIndex      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop   Barbershop       @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  user         User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  appointments Appointment[]
+  schedules    Schedule[]
+  favorites    FavoriteBarber[]
+
+  @@index([tenantId, barbershopId, active])
+  @@map("barbers")
+}
+
+model ServiceCategory {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  icon        String?
+  active      Boolean  @default(true)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  services Service[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+  @@map("service_categories")
+}
+
+model Service {
+  id           String   @id @default(uuid())
+  tenantId     String
+  barbershopId String
+  categoryId   String?
+  name         String
+  description  String?
+  price        Int
+  durationMin  Int
+  imageUrl     String?
+  active       Boolean  @default(true)
+  orderIndex   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop   Barbershop       @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  category     ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  appointments Appointment[]
+
+  @@unique([barbershopId, name])
+  @@index([tenantId, barbershopId, active])
+  @@map("services")
+}
+
+model Client {
+  id           String    @id @default(uuid())
+  tenantId     String
+  barbershopId String
+  userId       String?   @unique
+  name         String
+  phone        String
+  email        String?
+  photoUrl     String?
+  birthDate    DateTime?
+  preferences  Json?
+  notes        String?
+  totalVisits  Int       @default(0)
+  lastVisitAt  DateTime?
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop    Barbershop       @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  user          User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  appointments  Appointment[]
+  payments      Payment[]
+  favorites     FavoriteBarber[]
+  notifications Notification[]
+
+  @@unique([barbershopId, phone])
+  @@index([tenantId, barbershopId, active])
+  @@map("clients")
+}
+
+model Appointment {
+  id                  String            @id @default(uuid())
+  tenantId            String
+  barbershopId        String
+  clientId            String
+  barberId            String
+  serviceId           String
+  startsAt            DateTime
+  endsAt              DateTime
+  status              AppointmentStatus @default(pending)
+  notes               String?
+  price               Int
+  total               Int
+  cancelReason        String?
+  confirmationSentAt  DateTime?
+  reminder24hSentAt   DateTime?
+  reminder1hSentAt    DateTime?
+  reviewRequestSentAt DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  tenant        Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop    Barbershop           @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  client        Client               @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  barber        Barber               @relation(fields: [barberId], references: [id], onDelete: Restrict)
+  service       Service              @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  history       AppointmentHistory[]
+  payments      Payment[]
+  notifications Notification[]
+
+  @@index([tenantId, barbershopId, startsAt])
+  @@index([barberId, startsAt])
+  @@index([clientId, startsAt])
+  @@index([status, startsAt])
+  // Índices para los cron jobs de recordatorios — evitan full scans
+  @@index([reminder24hSentAt, startsAt, status])
+  @@index([reminder1hSentAt, startsAt, status])
+  @@index([reviewRequestSentAt, endsAt, status])
+  @@map("appointments")
+}
+
+model AppointmentHistory {
+  id               String            @id @default(uuid())
+  tenantId         String
+  appointmentId    String
+  status           AppointmentStatus
+  observations     String?
+  servicePerformed String?
+  actorUserId      String?
+  createdAt        DateTime          @default(now())
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  actor       User?       @relation("HistoryActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, appointmentId, createdAt])
+  @@map("appointment_history")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  tenantId      String
+  barbershopId  String
+  appointmentId String
+  clientId      String
+  method        PaymentMethod
+  amount        Int
+  status        PaymentStatus @default(pending)
+  reference     String?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop  Barbershop  @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, barbershopId, createdAt])
+  @@index([appointmentId, status])
+  @@map("payments")
+}
+
+model FavoriteBarber {
+  id           String   @id @default(uuid())
+  barbershopId String
+  clientId     String
+  barberId     String
+  createdAt    DateTime @default(now())
+
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  client     Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  barber     Barber     @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, barberId])
+  @@index([barbershopId, barberId])
+  @@map("favorite_barbers")
+}
+
+model Notification {
+  id            String              @id @default(uuid())
+  tenantId      String
+  barbershopId  String?
+  appointmentId String?
+  clientId      String?
+  channel       NotificationChannel
+  type          NotificationType
+  status        NotificationStatus  @default(pending)
+  recipient     String
+  title         String?
+  message       String
+  errorMessage  String?
+  sentAt        DateTime?
+  createdAt     DateTime            @default(now())
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop  Barbershop?  @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  client      Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status, createdAt])
+  @@index([appointmentId, type])
+  @@map("notifications")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  tenantId  String?
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model Schedule {
+  id           String   @id @default(uuid())
+  tenantId     String
+  barbershopId String
+  barberId     String
+  dayOfWeek    Int
+  startTime    String
+  endTime      String
+  isAvailable  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  barber     Barber     @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberId, dayOfWeek])
+  @@index([tenantId, barbershopId])
+  @@index([barberId, dayOfWeek, isAvailable]) // Consulta crítica en createAppointment
+  @@map("barber_schedules")
+}

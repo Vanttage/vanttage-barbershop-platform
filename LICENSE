@@ -1,0 +1,362 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                     VANTTAGE — SOFTWARE PROPIETARIO                          ║
+║                   LICENCIA DE USO COMERCIAL RESTRINGIDA                      ║
+║                                                                              ║
+║                        VANTTAGE PROPRIETARY LICENSE                          ║
+║                      RESTRICTED COMMERCIAL USE LICENSE                       ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Copyright (c) 2026 VANTTAGE. Todos los derechos reservados.
+Copyright (c) 2026 VANTTAGE. All rights reserved.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  AVISO IMPORTANTE — LEER ANTES DE USAR, COPIAR O DISTRIBUIR ESTE SOFTWARE
+  IMPORTANT NOTICE — READ BEFORE USING, COPYING OR DISTRIBUTING THIS SOFTWARE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Este software y todo el código fuente, documentación, diseños, algoritmos,
+bases de datos, interfaces de usuario, marcas, nombres comerciales y demás
+activos intelectuales relacionados ("el Software") son propiedad exclusiva
+de VANTTAGE y están protegidos por las leyes de propiedad intelectual de la
+República de Colombia, por los tratados internacionales aplicables y por las
+leyes de derechos de autor de los países en los que opera.
+
+This software and all source code, documentation, designs, algorithms,
+databases, user interfaces, trademarks, trade names and other related
+intellectual assets ("the Software") are the exclusive property of VANTTAGE
+and are protected by the intellectual property laws of the Republic of Colombia,
+applicable international treaties, and the copyright laws of the countries in
+which it operates.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PARTE I — TÉRMINOS Y CONDICIONES DE LICENCIA
+  PART I — LICENSE TERMS AND CONDITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ARTÍCULO 1. DERECHOS RESERVADOS
+─────────────────────────────────
+1.1  PROHIBICIONES ABSOLUTAS. Queda estrictamente prohibido, sin el previo
+     consentimiento escrito y expreso de VANTTAGE:
+
+     (a) COPIAR, reproducir, duplicar o crear copias del Software o de
+         cualquiera de sus componentes, en todo o en parte, por cualquier medio,
+         ya sea físico, digital, electrónico, magnético u óptico.
+
+     (b) DISTRIBUIR, vender, sublicenciar, arrendar, prestar, transferir,
+         ceder o de cualquier modo poner a disposición de terceros el Software,
+         su código fuente, binarios, módulos o cualquier derivado de él.
+
+     (c) MODIFICAR, adaptar, traducir, crear obras derivadas, descompilar,
+         desensamblar, aplicar ingeniería inversa o intentar descubrir el código
+         fuente, algoritmos, estructuras de datos o lógica de negocio del
+         Software por cualquier medio o procedimiento.
+
+     (d) USAR el Software para desarrollar, entrenar, alimentar o mejorar
+         modelos de inteligencia artificial, sistemas de machine learning,
+         bases de datos competidoras o cualquier producto o servicio que
+         compita directa o indirectamente con VANTTAGE.
+
+     (e) ELIMINAR, alterar, ocultar o modificar cualquier aviso de derechos
+         de autor, marcas registradas, avisos de propiedad o identificadores
+         de autoría que aparezcan en el Software.
+
+     (f) PUBLICAR, divulgar o compartir benchmarks, análisis de rendimiento,
+         capturas de pantalla, resultados de pruebas o cualquier información
+         técnica derivada del Software sin autorización escrita.
+
+1.2  LICENCIA LIMITADA DE USO. VANTTAGE concede a los suscriptores activos
+     del servicio una licencia personal, no exclusiva, no transferible,
+     revocable y limitada para acceder y usar la interfaz web del Software
+     exclusivamente con los fines comerciales autorizados en el plan de
+     suscripción contratado. Esta licencia no incluye el código fuente.
+
+ARTÍCULO 2. CONFIDENCIALIDAD
+──────────────────────────────
+2.1  Todo el código fuente, arquitectura, diseño de base de datos, flujos de
+     autenticación, lógica de automatizaciones, estructura de APIs, secretos
+     de entorno y cualquier información técnica del Software constituyen
+     INFORMACIÓN CONFIDENCIAL de VANTTAGE.
+
+2.2  Cualquier persona que tenga acceso legítimo al código fuente (empleados,
+     contratistas, colaboradores) está obligada a mantener estricta
+     confidencialidad y se prohíbe expresamente:
+     · Compartir, publicar o filtrar dicha información a terceros.
+     · Usar la información confidencial fuera del alcance autorizado.
+     · Almacenar copias no autorizadas en repositorios públicos o privados
+       accesibles a personas no autorizadas.
+
+2.3  La obligación de confidencialidad persiste por un período de CINCO (5)
+     AÑOS después de la terminación de cualquier relación contractual con
+     VANTTAGE, o indefinidamente si la información constituye un secreto
+     comercial conforme a la Ley 256 de 1996 de Colombia.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PARTE II — POLÍTICA DE SEGURIDAD
+  PART II — SECURITY POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ARTÍCULO 3. MEDIDAS DE SEGURIDAD IMPLEMENTADAS
+────────────────────────────────────────────────
+3.1  El Software implementa las siguientes medidas de seguridad técnica:
+
+     AUTENTICACIÓN Y ACCESO
+     · Autenticación basada en JWT con rotación de tokens.
+     · Contraseñas almacenadas exclusivamente como hashes bcrypt (factor 12).
+     · Tokens de recuperación de contraseña de un solo uso con expiración.
+     · Control de acceso basado en roles (RBAC): superadmin, owner, client.
+     · Aislamiento multi-tenant: cada tenant solo accede a sus propios datos.
+
+     COMUNICACIONES
+     · Todas las comunicaciones via HTTPS/TLS 1.2+ obligatorio.
+     · Headers de seguridad: X-Content-Type-Options, X-Frame-Options.
+     · CSRF protection implementada en todas las mutaciones.
+
+     RATE LIMITING Y ABUSO
+     · Rate limiting en endpoints críticos (auth, registro, recuperación).
+     · Límites configurados: 5 intentos/15min (login), 3/hora (registro).
+     · Backend: Upstash Redis con fallback en memoria para desarrollo.
+
+     DATOS Y ALMACENAMIENTO
+     · Base de datos PostgreSQL en Supabase con cifrado en reposo.
+     · Variables de entorno sensibles nunca expuestas al cliente.
+     · Claves API y secretos gestionados exclusivamente via variables de entorno.
+     · Separación estricta entre claves públicas y privadas.
+
+     MONITOREO
+     · Error tracking en tiempo real via Sentry (server + cliente + edge).
+     · Logs de auditoría para cambios de estado de citas y acciones críticas.
+     · Cron jobs protegidos con CRON_SECRET (Bearer token).
+
+3.2  VARIABLES DE ENTORNO Y SECRETOS. El Software requiere las siguientes
+     categorías de secretos que NUNCA deben ser comprometidos:
+
+     ⚠️  CRÍTICO — Exposición causa compromiso total del sistema:
+         DATABASE_URL, DIRECT_URL         → Acceso completo a la base de datos
+         NEXTAUTH_SECRET                  → Firma de tokens JWT (sesiones)
+         CRON_SECRET                      → Autorización de jobs automáticos
+
+     ⚠️  ALTO — Exposición permite envío de mensajes/emails no autorizados:
+         TWILIO_AUTH_TOKEN                → API de WhatsApp
+         RESEND_API_KEY                   → API de correo electrónico
+         SENTRY_AUTH_TOKEN                → Acceso a error tracking
+
+     ℹ️  MEDIO — Exposición permite lectura limitada de datos:
+         UPSTASH_REDIS_REST_TOKEN         → Cache de rate limiting
+         NEXT_PUBLIC_SUPABASE_*           → Cliente público de Supabase
+
+ARTÍCULO 4. REPORTE DE VULNERABILIDADES (RESPONSIBLE DISCLOSURE)
+─────────────────────────────────────────────────────────────────
+4.1  Si descubres una vulnerabilidad de seguridad en el Software, te pedimos
+     que la reportes de forma responsable ANTES de divulgarla públicamente.
+
+4.2  CANAL DE REPORTE SEGURO:
+     Email:    seguridad@vanttage.app
+     Asunto:   [SECURITY] Descripción breve
+     PGP:      Disponible en vanttage.app/security.asc
+
+4.3  INFORMACIÓN A INCLUIR EN EL REPORTE:
+     · Descripción detallada de la vulnerabilidad
+     · Pasos reproducibles (Proof of Concept)
+     · Impacto potencial estimado
+     · Versión/componente afectado
+     · Datos de contacto para coordinación
+
+4.4  COMPROMISOS DE VANTTAGE:
+     · Acuse de recibo en menos de 48 horas hábiles.
+     · Actualización de estado cada 7 días hasta resolución.
+     · Reconocimiento público al investigador (si lo desea).
+     · No se emprenderán acciones legales contra reportes realizados de buena
+       fe siguiendo esta política de divulgación responsable.
+
+4.5  ALCANCE DEL PROGRAMA:
+     En alcance:     vanttage.app, *.vanttage.app, APIs públicas
+     Fuera de alcance: Servicios de terceros (Supabase, Twilio, Resend),
+                       ataques de denegación de servicio (DoS/DDoS),
+                       ingeniería social a empleados.
+
+4.6  VULNERABILIDADES EXCLUIDAS DE DIVULGACIÓN RESPONSABLE:
+     Cualquier acceso, escaneo o prueba de penetración no autorizado
+     constituye una violación de esta licencia y puede resultar en acciones
+     legales conforme al Código Penal colombiano (Ley 1273 de 2009) y
+     normativa internacional aplicable.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PARTE III — PROTECCIÓN DE DATOS PERSONALES
+  PART III — PERSONAL DATA PROTECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ARTÍCULO 5. TRATAMIENTO DE DATOS PERSONALES
+────────────────────────────────────────────
+5.1  VANTTAGE actúa como RESPONSABLE DEL TRATAMIENTO de los datos personales
+     de usuarios finales del Software, conforme a:
+     · Ley 1581 de 2012 (Régimen General de Protección de Datos — Colombia)
+     · Decreto 1377 de 2013 (reglamentario de la Ley 1581)
+     · Reglamento General de Protección de Datos — GDPR (usuarios en la UE)
+     · Ley Federal de Protección de Datos Personales (usuarios en México)
+
+5.2  DATOS RECOPILADOS Y FINALIDADES:
+
+     Datos de titulares del negocio (owners):
+     · Nombre, email, teléfono → Gestión de cuenta y comunicaciones
+     · Datos del negocio       → Configuración del servicio SaaS
+
+     Datos de clientes de las barberías (tratados como encargado):
+     · Nombre, teléfono, email → Gestión de citas y notificaciones automáticas
+     · Historial de visitas     → Funcionalidades de fidelización y reactivación
+     · Preferencias             → Personalización del servicio
+
+5.3  DERECHOS DE LOS TITULARES. Los titulares de datos personales tienen
+     derecho a: Conocer, Actualizar, Rectificar (ARCO) sus datos, así como
+     a revocar la autorización y solicitar supresión. Contacto:
+     datos@vanttage.app
+
+5.4  TRANSFERENCIAS INTERNACIONALES. Los datos pueden ser procesados por:
+     · Supabase Inc. (USA) — Almacenamiento de base de datos
+     · Twilio Inc. (USA) — Envío de mensajes WhatsApp
+     · Resend Inc. (USA) — Envío de correos electrónicos
+     · Vercel Inc. (USA) — Infraestructura de hosting
+     · Sentry Inc. (USA) — Monitoreo de errores
+     Todas las transferencias están amparadas por cláusulas contractuales
+     estándar y los marcos de transferencia internacional aplicables.
+
+5.5  RETENCIÓN DE DATOS. Los datos se conservan durante la vigencia del
+     contrato de suscripción y por el período requerido por la ley aplicable.
+     Los datos de auditoría se conservan por un mínimo de 5 años.
+
+5.6  MEDIDAS DE SEGURIDAD PARA DATOS PERSONALES. VANTTAGE implementa medidas
+     técnicas y organizativas apropiadas para proteger los datos personales
+     contra acceso no autorizado, pérdida, alteración o divulgación, incluyendo
+     cifrado, control de acceso, y procedimientos de respuesta a incidentes.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PARTE IV — EXCLUSIÓN DE GARANTÍAS Y LIMITACIÓN DE RESPONSABILIDAD
+  PART IV — DISCLAIMER OF WARRANTIES AND LIMITATION OF LIABILITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ARTÍCULO 6. EXCLUSIÓN DE GARANTÍAS
+────────────────────────────────────
+EL SOFTWARE SE PROPORCIONA "TAL CUAL" Y "SEGÚN DISPONIBILIDAD". EN LA MÁXIMA
+MEDIDA PERMITIDA POR LA LEY APLICABLE, VANTTAGE EXCLUYE EXPRESAMENTE TODA
+GARANTÍA, EXPRESA O IMPLÍCITA, INCLUYENDO SIN LIMITACIÓN:
+
+· GARANTÍAS DE COMERCIABILIDAD O ADECUACIÓN PARA UN FIN PARTICULAR.
+· GARANTÍA DE QUE EL SOFTWARE SERÁ ININTERRUMPIDO, LIBRE DE ERRORES O SEGURO.
+· GARANTÍA SOBRE LA EXACTITUD, INTEGRIDAD O UTILIDAD DE CUALQUIER INFORMACIÓN
+  PROPORCIONADA POR EL SOFTWARE.
+· GARANTÍA DE NO INFRACCIÓN DE DERECHOS DE TERCEROS.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE". TO THE MAXIMUM EXTENT
+PERMITTED BY APPLICABLE LAW, VANTTAGE EXPRESSLY DISCLAIMS ALL WARRANTIES,
+EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+ARTÍCULO 7. LIMITACIÓN DE RESPONSABILIDAD
+───────────────────────────────────────────
+7.1  EN NINGÚN CASO VANTTAGE, SUS DIRECTIVOS, EMPLEADOS, SOCIOS O PROVEEDORES
+     SERÁN RESPONSABLES POR DAÑOS INDIRECTOS, INCIDENTALES, ESPECIALES,
+     CONSECUENTES O PUNITIVOS, INCLUYENDO PERO NO LIMITADO A: PÉRDIDA DE
+     GANANCIAS, PÉRDIDA DE DATOS, INTERRUPCIÓN DEL NEGOCIO O DAÑOS A LA
+     REPUTACIÓN, AUN CUANDO VANTTAGE HAYA SIDO ADVERTIDO DE LA POSIBILIDAD
+     DE DICHOS DAÑOS.
+
+7.2  LA RESPONSABILIDAD TOTAL ACUMULADA DE VANTTAGE ANTE CUALQUIER SUSCRIPTOR
+     POR CUALQUIER CONCEPTO NO EXCEDERÁ EL MONTO PAGADO POR DICHO SUSCRIPTOR
+     EN LOS TRES (3) MESES ANTERIORES AL EVENTO QUE DIO ORIGEN AL RECLAMO.
+
+7.3  ALGUNAS JURISDICCIONES NO PERMITEN LA EXCLUSIÓN O LIMITACIÓN DE CIERTOS
+     TIPOS DE DAÑOS, POR LO QUE LAS LIMITACIONES ANTERIORES PUEDEN NO
+     APLICARSE EN SU TOTALIDAD EN DICHAS JURISDICCIONES.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PARTE V — DISPOSICIONES GENERALES
+  PART V — GENERAL PROVISIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ARTÍCULO 8. LEY APLICABLE Y JURISDICCIÓN
+──────────────────────────────────────────
+8.1  Esta Licencia se rige e interpreta conforme a las leyes de la República
+     de Colombia, sin perjuicio de sus normas de conflicto de leyes.
+
+8.2  Para la resolución de cualquier disputa derivada de esta Licencia, las
+     partes se someten a la jurisdicción de los tribunales competentes de
+     Bogotá D.C., Colombia, renunciando expresamente a cualquier otro fuero
+     que pudiera corresponderles.
+
+8.3  Las controversias podrán someterse previamente a mecanismos alternativos
+     de solución de conflictos (mediación o conciliación) conforme a la
+     Ley 640 de 2001 de Colombia.
+
+ARTÍCULO 9. SANCIONES POR INCUMPLIMIENTO
+──────────────────────────────────────────
+9.1  El uso no autorizado del Software puede constituir una infracción a:
+     · Ley 23 de 1982 — Derechos de autor (Colombia)
+     · Ley 1273 de 2009 — Delitos informáticos (Colombia)
+     · Decisión Andina 351 de 1993 — Derechos de autor (CAN)
+     · Acuerdo sobre los ADPIC/TRIPS (OMC)
+     · Digital Millennium Copyright Act — DMCA (USA)
+
+9.2  Las infracciones pueden dar lugar a:
+     · Acciones civiles por daños y perjuicios (incluyendo daños punitivos).
+     · Acciones penales conforme a las normas aplicables.
+     · Medidas cautelares inmediatas (incluyendo órdenes de cese y desistimiento).
+     · Reclamación de la totalidad de los beneficios obtenidos ilegalmente.
+
+ARTÍCULO 10. TERCEROS COMPONENTES DE SOFTWARE
+───────────────────────────────────────────────
+10.1 El Software puede incorporar componentes de software de código abierto
+     licenciados bajo sus respectivas licencias (MIT, Apache 2.0, etc.).
+     Dichas licencias no afectan los derechos del código propietario de VANTTAGE.
+
+10.2 La lista completa de componentes de terceros y sus licencias se encuentra
+     disponible en el archivo THIRD-PARTY-LICENSES.md del repositorio.
+
+ARTÍCULO 11. MODIFICACIONES A ESTA LICENCIA
+─────────────────────────────────────────────
+11.1 VANTTAGE se reserva el derecho de modificar los términos de esta Licencia
+     en cualquier momento. Las modificaciones serán notificadas a los
+     suscriptores activos con al menos treinta (30) días de anticipación.
+
+11.2 El uso continuado del Software después del período de notificación
+     constituye aceptación de los nuevos términos.
+
+ARTÍCULO 12. DIVISIBILIDAD
+────────────────────────────
+12.1 Si alguna disposición de esta Licencia es declarada inválida, ilegal o
+     inaplicable por un tribunal competente, dicha disposición se modificará
+     en la medida mínima necesaria para hacerla aplicable. Las demás
+     disposiciones permanecerán en plena vigencia y efecto.
+
+ARTÍCULO 13. ACUERDO COMPLETO
+───────────────────────────────
+13.1 Esta Licencia, junto con los Términos de Servicio y la Política de
+     Privacidad de VANTTAGE (disponibles en vanttage.app/legal), constituye
+     el acuerdo completo entre VANTTAGE y el usuario respecto al Software,
+     y reemplaza cualquier comunicación, acuerdo o entendimiento previo,
+     ya sea oral o escrito, relacionado con el mismo.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CONTACTO / CONTACT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Consultas legales:       legal@vanttage.app
+  Reporte de seguridad:    seguridad@vanttage.app
+  Protección de datos:     datos@vanttage.app
+  Sitio web:               https://vanttage.app
+  Soporte:                 soporte@vanttage.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  © 2026 VANTTAGE. Todos los derechos reservados. / All rights reserved.
+
+  VANTTAGE es una marca registrada. Todos los nombres de productos,
+  marcas y logos mencionados son propiedad de sus respectivos dueños.
+
+  VANTTAGE is a registered trademark. All product names, brands and
+  logos mentioned are the property of their respective owners.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  VERSIÓN / VERSION: 1.0.0 — 2026-04-17
+  PRÓXIMA REVISIÓN / NEXT REVIEW: 2027-04-17
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
