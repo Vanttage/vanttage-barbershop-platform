@@ -1,4 +1,6 @@
 import { headers } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/prisma";
 
 const RESERVED_SLUGS = new Set(["www", "app", "admin", "api", "static", "cdn"]);
@@ -57,11 +59,23 @@ export type TenantContext = {
 
 export async function getTenantContext(): Promise<TenantContext | null> {
   const headersList = await headers();
-  const tenantSlug =
-    headersList.get("x-tenant-slug") ??
-    (process.env.NODE_ENV === "development"
-      ? process.env.VANTTAGE_DEV_TENANT ?? null
-      : null);
+
+  // 1. Middleware header — set for tenant subdomain routes (rey.vanttagetech.com)
+  let tenantSlug: string | null = headersList.get("x-tenant-slug");
+
+  // 2. Dev fallback
+  if (!tenantSlug && process.env.NODE_ENV === "development") {
+    tenantSlug = process.env.VANTTAGE_DEV_TENANT ?? null;
+  }
+
+  // 3. Session fallback — for authenticated dashboard/API routes accessed from
+  //    app.vanttagetech.com where no subdomain tenant can be resolved.
+  if (!tenantSlug) {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.tenantSlug) {
+      tenantSlug = session.user.tenantSlug;
+    }
+  }
 
   if (!tenantSlug) {
     return null;
