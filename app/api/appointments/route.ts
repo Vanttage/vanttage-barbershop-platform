@@ -27,13 +27,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
-  const { date, barberId, status, page, limit } = parsed.data;
+  const { date, dateFrom, dateTo, barberId, status, page, limit } = parsed.data;
   const where: Record<string, unknown> = {
     tenantId: ctx.tenantId,
     barbershopId: ctx.barbershopId,
   };
 
-  if (date) {
+  if (dateFrom && dateTo) {
+    where.startsAt = {
+      gte: new Date(`${dateFrom}T00:00:00.000Z`),
+      lte: new Date(`${dateTo}T23:59:59.999Z`),
+    };
+  } else if (date) {
     where.startsAt = {
       gte: new Date(`${date}T00:00:00.000Z`),
       lte: new Date(`${date}T23:59:59.999Z`),

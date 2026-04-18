@@ -391,7 +391,7 @@ export default function AgendaPage() {
   const dateTo = weekDays[6].toISOString().slice(0, 10);
 
   const { data: appointments, loading: loadingAppts, refetch } =
-    useApiList<AppointmentWithRelations>(`/api/appointments?date=${new Date().toISOString().slice(0, 10)}&limit=100`);
+    useApiList<AppointmentWithRelations>(`/api/appointments?dateFrom=${dateFrom}&dateTo=${dateTo}&limit=200`);
   const { data: barbers } = useApiList<Barber>("/api/barbers");
   const { data: services } = useApiList<Service>("/api/services");
 
@@ -511,7 +511,7 @@ export default function AgendaPage() {
               </div>
               {todayAppts.length === 0 ? (
                 <div className="py-16 text-center text-[13px] text-zinc-600">
-                  No hay citas para hoy
+                  No hay citas esta semana
                 </div>
               ) : (
                 todayAppts
