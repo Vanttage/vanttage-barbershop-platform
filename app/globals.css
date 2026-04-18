@@ -38,6 +38,53 @@
   }
 }
 
+/* ── Home page animations ───────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.75; }
+  50%       { opacity: 1; }
+}
+@keyframes orbBreathe {
+  0%, 100% { opacity: 0.6;  transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.1); }
+}
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1);   opacity: 0.65; }
+  50%       { transform: scale(1.5); opacity: 1; }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+.home-badge  { opacity:0; animation: fadeUp     0.55s cubic-bezier(.22,1,.36,1) 0.05s forwards; }
+.home-h1     { opacity:0; animation: fadeUp     0.6s  cubic-bezier(.22,1,.36,1) 0.18s forwards; }
+.home-p      { opacity:0; animation: fadeUp     0.55s cubic-bezier(.22,1,.36,1) 0.32s forwards; }
+.home-ctas   { opacity:0; animation: fadeUp     0.55s cubic-bezier(.22,1,.36,1) 0.46s forwards; }
+.home-card   { opacity:0; animation: slideRight 0.7s  cubic-bezier(.22,1,.36,1) 0.28s forwards; }
+.home-stat-0 { opacity:0; animation: fadeUp     0.4s  cubic-bezier(.22,1,.36,1) 0.44s forwards; }
+.home-stat-1 { opacity:0; animation: fadeUp     0.4s  cubic-bezier(.22,1,.36,1) 0.53s forwards; }
+.home-stat-2 { opacity:0; animation: fadeUp     0.4s  cubic-bezier(.22,1,.36,1) 0.62s forwards; }
+.home-stat-3 { opacity:0; animation: fadeUp     0.4s  cubic-bezier(.22,1,.36,1) 0.71s forwards; }
+.home-feat-0 { opacity:0; animation: fadeUp     0.4s  cubic-bezier(.22,1,.36,1) 0.56s forwards; }
+.home-feat-1 { opacity:0; animation: fadeUp     0.4s  cubic-bezier(.22,1,.36,1) 0.64s forwards; }
+.home-feat-2 { opacity:0; animation: fadeUp     0.4s  cubic-bezier(.22,1,.36,1) 0.72s forwards; }
+.home-feat-3 { opacity:0; animation: fadeUp     0.4s  cubic-bezier(.22,1,.36,1) 0.80s forwards; }
+.home-glow   { animation: glowPulse  6s ease-in-out infinite; }
+.home-orb    { animation: orbBreathe 9s ease-in-out infinite; }
+.home-online { animation: blink      2.4s ease-in-out infinite; }
+.home-dot-0  { animation: dotPulse  2.5s ease-in-out 0.0s infinite; }
+.home-dot-1  { animation: dotPulse  2.5s ease-in-out 0.4s infinite; }
+.home-dot-2  { animation: dotPulse  2.5s ease-in-out 0.8s infinite; }
+.home-dot-3  { animation: dotPulse  2.5s ease-in-out 1.2s infinite; }
+
 @layer utilities {
   .font-display {
     font-family: var(--font-display), sans-serif;
