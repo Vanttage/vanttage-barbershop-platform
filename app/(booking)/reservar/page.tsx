@@ -132,11 +132,18 @@ export default function BookingPage() {
     const startsAt = new Date(selectedDate);
     startsAt.setHours(h, m, 0, 0);
 
+    const barberId = selectedBarb === "any" ? barbers[0]?.id : selectedBarb;
+    if (!barberId) {
+      setError("No hay barberos disponibles. Contacta la barbería directamente.");
+      setLoading(false);
+      return;
+    }
+
     const { error: apiError } = await apiCall<AppointmentWithRelations>(
       "/api/appointments",
       "POST",
       {
-        barberId: selectedBarb === "any" ? barbers[0]?.id : selectedBarb,
+        barberId,
         serviceId: selectedSvc,
         clientName: form.name,
         clientPhone: form.phone,
@@ -318,25 +325,36 @@ export default function BookingPage() {
                 ¿Con quién?
               </h2>
             </div>
-            <button
-              onClick={() => {
-                setSelectedBarb("any");
-                setStep("fecha");
-              }}
-              className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#111113] border border-white/[0.05] hover:border-gold-b hover:bg-[rgba(201,168,76,0.04)] transition-all hover:-translate-y-0.5 text-left"
-            >
-              <div className="w-12 h-12 rounded-full bg-zinc-800 border border-white/[0.08] flex items-center justify-center text-zinc-400 text-[18px]">
-                ✦
+            {!loadingBars && barbers.length === 0 ? (
+              <div className="p-5 rounded-xl bg-zinc-900/60 border border-white/[0.06] text-center">
+                <p className="text-[13px] text-zinc-400">
+                  Esta barbería aún no tiene barberos registrados.
+                </p>
+                <p className="text-[12px] text-zinc-600 mt-1">
+                  Contacta directamente al negocio para agendar.
+                </p>
               </div>
-              <div>
-                <div className="text-[14px] font-medium text-zinc-100">
-                  Sin preferencia
+            ) : (
+              <button
+                onClick={() => {
+                  setSelectedBarb("any");
+                  setStep("fecha");
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#111113] border border-white/[0.05] hover:border-gold-b hover:bg-[rgba(201,168,76,0.04)] transition-all hover:-translate-y-0.5 text-left"
+              >
+                <div className="w-12 h-12 rounded-full bg-zinc-800 border border-white/[0.08] flex items-center justify-center text-zinc-400 text-[18px]">
+                  ✦
                 </div>
-                <div className="text-[12px] text-zinc-500 mt-0.5">
-                  Primer barbero disponible
+                <div>
+                  <div className="text-[14px] font-medium text-zinc-100">
+                    Sin preferencia
+                  </div>
+                  <div className="text-[12px] text-zinc-500 mt-0.5">
+                    Primer barbero disponible
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+            )}
             {loadingBars
               ? Array.from({ length: 3 }).map((_, i) => (
                   <div
