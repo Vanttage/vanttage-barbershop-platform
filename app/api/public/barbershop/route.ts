@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentTenant, getTenantContext } from "@/src/lib/tenant";
 
-export async function GET() {
-  const [tenant, ctx] = await Promise.all([getCurrentTenant(), getTenantContext()]);
+export async function GET(request: NextRequest) {
+  const slugFromQuery = request.nextUrl.searchParams.get("tenantSlug");
+  const [tenant, ctx] = await Promise.all([
+    getCurrentTenant(slugFromQuery),
+    getTenantContext(slugFromQuery),
+  ]);
 
   if (!tenant || !ctx) {
     return NextResponse.json({ error: "Tenant no encontrado" }, { status: 404 });

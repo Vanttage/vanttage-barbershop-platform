@@ -12,6 +12,12 @@ import type {
 
 type Step = "servicio" | "barbero" | "fecha" | "datos" | "confirmado";
 
+interface BookingPageProps {
+  /** Tenant slug passed from the path-based route (/[slug]/reservar).
+   *  Appended to all API calls so tenant resolution never depends on cookies. */
+  tenantSlug?: string;
+}
+
 const HOURS = [
   "09:00",
   "09:30",
@@ -87,7 +93,7 @@ function StepBar({ current }: { current: Step }) {
   );
 }
 
-export default function BookingPage() {
+export default function BookingPage({ tenantSlug }: BookingPageProps) {
   const [step, setStep] = useState<Step>("servicio");
   const [selectedSvc, setSelectedSvc] = useState<string | null>(null);
   const [selectedBarb, setSelectedBarb] = useState<string | null>(null);
@@ -97,13 +103,17 @@ export default function BookingPage() {
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "" });
 
+  // Build query string so all API calls carry the tenant slug explicitly.
+  // This bypasses any cookie/header dependency — works reliably on all devices.
+  const qs = tenantSlug ? `?tenantSlug=${encodeURIComponent(tenantSlug)}` : "";
+
   // Datos reales de la API
   const { data: services, loading: loadingSvcs } =
-    useApiList<Service>("/api/services");
+    useApiList<Service>(`/api/services${qs}`);
   const { data: barbers, loading: loadingBars } =
-    useApiList<Barber>("/api/barbers");
+    useApiList<Barber>(`/api/barbers${qs}`);
   const { data: barbershop } = useApi<PublicBarbershop>(
-    "/api/public/barbershop",
+    `/api/public/barbershop${qs}`,
   );
 
   const svc = services.find((s) => s.id === selectedSvc);
@@ -140,7 +150,7 @@ export default function BookingPage() {
     }
 
     const { error: apiError } = await apiCall<AppointmentWithRelations>(
-      "/api/appointments",
+      `/api/appointments${qs}`,
       "POST",
       {
         barberId,

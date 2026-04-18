@@ -36,8 +36,8 @@ export async function getTenantBySlug(slug: string) {
   });
 }
 
-export async function getCurrentTenant() {
-  const ctx = await getTenantContext();
+export async function getCurrentTenant(slugOverride?: string | null) {
+  const ctx = await getTenantContext(slugOverride);
   if (!ctx) return null;
 
   return prisma.tenant.findUnique({
@@ -57,11 +57,16 @@ export type TenantContext = {
   barbershopName: string;
 };
 
-export async function getTenantContext(): Promise<TenantContext | null> {
+export async function getTenantContext(slugOverride?: string | null): Promise<TenantContext | null> {
+  // 0. Explicit slug override — passed by API routes when the booking page
+  //    includes ?tenantSlug=xxx as a query param (bypasses cookie/header issues).
+  let tenantSlug: string | null =
+    slugOverride && !RESERVED_SLUGS.has(slugOverride) ? slugOverride : null;
+
   const headersList = await headers();
 
   // 1. Middleware header — set for tenant subdomain routes (rey.vanttagetech.com)
-  let tenantSlug: string | null = headersList.get("x-tenant-slug");
+  if (!tenantSlug) tenantSlug = headersList.get("x-tenant-slug");
 
   // 2. Dev fallback
   if (!tenantSlug && process.env.NODE_ENV === "development") {

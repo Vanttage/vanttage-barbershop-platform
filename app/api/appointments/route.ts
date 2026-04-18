@@ -71,7 +71,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const ctx = await getTenantContext();
+  const slugFromQuery = request.nextUrl.searchParams.get("tenantSlug");
+  const ctx = await getTenantContext(slugFromQuery);
   if (!ctx) {
     return NextResponse.json({ error: "Tenant no encontrado" }, { status: 404 });
   }

@@ -5,7 +5,8 @@ import { getTenantContext } from "@/src/lib/tenant";
 import { CreateBarberSchema, validateBody } from "@/src/validations";
 
 export async function GET(request: NextRequest) {
-  const ctx = await getTenantContext();
+  const slugFromQuery = request.nextUrl.searchParams.get("tenantSlug");
+  const ctx = await getTenantContext(slugFromQuery);
   if (!ctx) {
     return NextResponse.json({ error: "Tenant no encontrado" }, { status: 404 });
   }
