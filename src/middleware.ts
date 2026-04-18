@@ -51,16 +51,23 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  // Dashboard / API routes accessed from app.vanttagetech.com have no subdomain
+  // tenant. Fall back to the tenantSlug stored in the JWT so that getTenantContext()
+  // can resolve the barbershop for the logged-in owner.
+  if (!tenantSlug && token?.tenantSlug) {
+    tenantSlug = token.tenantSlug;
+  }
+
   const headers = new Headers(request.headers);
 
   if (tenantSlug) {
     headers.set("x-tenant-slug", tenantSlug);
   }
-
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
 
   const isAuthPath = AUTH_PATHS.some((path) => pathname.startsWith(path));
 
