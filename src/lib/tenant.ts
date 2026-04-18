@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/prisma";
@@ -68,7 +68,19 @@ export async function getTenantContext(): Promise<TenantContext | null> {
     tenantSlug = process.env.VANTTAGE_DEV_TENANT ?? null;
   }
 
-  // 3. Session fallback — for authenticated dashboard/API routes accessed from
+  // 3. Cookie fallback — for client-side API calls from the public booking page.
+  //    Safari iOS and other browsers may not propagate the x-tenant-slug header
+  //    through the Edge middleware correctly; reading the cookie directly in the
+  //    Node.js runtime is more reliable.
+  if (!tenantSlug) {
+    const cookieStore = await cookies();
+    const c = cookieStore.get("tenant-slug");
+    if (c?.value && !RESERVED_SLUGS.has(c.value)) {
+      tenantSlug = c.value;
+    }
+  }
+
+  // 4. Session fallback — for authenticated dashboard/API routes accessed from
   //    app.vanttagetech.com where no subdomain tenant can be resolved.
   if (!tenantSlug) {
     const session = await getServerSession(authOptions);
