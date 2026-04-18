@@ -29,7 +29,11 @@
       "Bash(node -e \"console.log\\('NEXTAUTH_SECRET=' + require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\); console.log\\('CRON_SECRET=' + require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\);\")",
       "Bash(npx next *)",
       "Bash(del \"C:\\\\dev\\\\VANTTAGE\\\\vanttage_peluquerias\\\\sentry.server.config.ts\" \"C:\\\\dev\\\\VANTTAGE\\\\vanttage_peluquerias\\\\sentry.client.config.ts\" \"C:\\\\dev\\\\VANTTAGE\\\\vanttage_peluquerias\\\\sentry.edge.config.ts\")",
-      "Bash(node -e \"console.log\\(new Date\\(\\).getFullYear\\(\\)\\)\")"
+      "Bash(node -e \"console.log\\(new Date\\(\\).getFullYear\\(\\)\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(npm list *)"
     ]
   }
 }
