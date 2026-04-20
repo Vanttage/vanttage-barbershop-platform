@@ -1,6 +1,7 @@
 import React from "react";
 import AppointmentsList from "@/src/components/admin/dashboard/AppointmentsList";
 import BarbersPanel from "@/src/components/admin/dashboard/BarbersPanel";
+import BookingLinkCard from "@/src/components/admin/dashboard/BookingLinkCard";
 import Header from "@/src/components/admin/dashboard/Header";
 import StatsCards from "@/src/components/admin/dashboard/StatsCards";
 import WeeklyChart from "@/src/components/admin/dashboard/WeeklyChart";
@@ -17,7 +18,7 @@ const AUTO_ITEMS = [
 
 function AutoStatus() {
   return (
-    <div className="bg-[#111113] border border-white/[0.04] rounded-xl px-5 py-3.5 flex items-center gap-4 flex-wrap">
+    <div className="bg-[#111113] border border-white/[0.04] rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap sm:px-5 sm:py-3.5 sm:gap-4">
       <span className="text-[11px] text-zinc-600 font-medium tracking-[0.06em] uppercase whitespace-nowrap">
         Automatizaciones
       </span>
@@ -50,10 +51,11 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col flex-1 min-h-screen bg-zinc-950">
       <Header title="Dashboard" />
-      <main className="flex-1 px-7 py-7 pb-10 flex flex-col gap-5 max-w-[1440px] w-full mx-auto">
+      <main className="flex-1 px-4 py-5 pb-10 flex flex-col gap-4 max-w-[1440px] w-full mx-auto sm:px-6 sm:py-7 sm:gap-5">
+        <BookingLinkCard />
         <AutoStatus />
         <StatsCards />
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 items-start">
+        <div className="grid grid-cols-1 gap-4 items-start sm:gap-5 xl:grid-cols-[1fr_300px]">
           <WeeklyChart />
           <BarbersPanel />
         </div>

@@ -402,7 +402,7 @@ export default function BarberosPage() {
         <DeleteConfirm barber={selected} onClose={closeModal} onDeleted={() => { closeModal(); refetch(); }} />
       )}
 
-      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-7 py-6">
+      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-5 sm:px-7 sm:py-6">
         {/* Metrics */}
         <div className="grid gap-3 sm:grid-cols-4">
           {[

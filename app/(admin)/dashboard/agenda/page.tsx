@@ -428,32 +428,46 @@ export default function AgendaPage() {
         />
       )}
 
-      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-7 py-6">
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <button onClick={prevWeek} className="rounded-lg border border-white/[0.06] p-2 text-zinc-500 transition hover:border-white/[0.12] hover:text-zinc-300">
-              <ChevronLeft size={14} />
-            </button>
-            <span className="min-w-[200px] text-center text-[14px] font-medium text-zinc-200">
-              {weekDays[0].toLocaleDateString("es-CO", { day: "numeric", month: "short" })}
-              {" – "}
-              {weekDays[6].toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
-            </span>
-            <button onClick={nextWeek} className="rounded-lg border border-white/[0.06] p-2 text-zinc-500 transition hover:border-white/[0.12] hover:text-zinc-300">
-              <ChevronRight size={14} />
-            </button>
-            <button onClick={goToday} className="ml-2 rounded-lg border border-white/[0.06] px-3 py-1.5 text-[12px] text-zinc-500 transition hover:border-gold-b hover:text-gold">
-              Hoy
+      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-4 px-4 py-5 sm:gap-5 sm:px-6 sm:py-6">
+        {/* Toolbar — row 1: navegación de semana */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            {/* Week nav */}
+            <div className="flex items-center gap-1.5">
+              <button onClick={prevWeek} className="rounded-lg border border-white/[0.06] p-2 text-zinc-500 transition hover:border-white/[0.12] hover:text-zinc-300">
+                <ChevronLeft size={14} />
+              </button>
+              <span className="text-center text-[13px] font-medium text-zinc-200 sm:min-w-[200px] sm:text-[14px]">
+                {weekDays[0].toLocaleDateString("es-CO", { day: "numeric", month: "short" })}
+                {" – "}
+                {weekDays[6].toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+              <button onClick={nextWeek} className="rounded-lg border border-white/[0.06] p-2 text-zinc-500 transition hover:border-white/[0.12] hover:text-zinc-300">
+                <ChevronRight size={14} />
+              </button>
+              <button onClick={goToday} className="rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-[12px] text-zinc-500 transition hover:border-gold-b hover:text-gold sm:ml-2 sm:px-3">
+                Hoy
+              </button>
+            </div>
+            {/* Nueva cita — siempre visible */}
+            <button
+              onClick={() => setShowNewAppt(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-gold-b bg-gold-subtle px-3 py-2 text-[12px] font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)] sm:px-4 sm:text-[12.5px]"
+            >
+              <Plus size={13} />
+              <span className="hidden xs:inline sm:inline">Nueva cita</span>
+              <span className="xs:hidden sm:hidden">+</span>
             </button>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Row 2: view toggle + barber filter */}
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex gap-0.5 rounded-lg border border-white/[0.04] bg-zinc-800/60 p-0.5">
               {(["semana", "lista"] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] capitalize transition ${
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] capitalize transition sm:px-3 ${
                     view === v ? "border border-white/[0.08] bg-zinc-700 font-medium text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
@@ -465,32 +479,25 @@ export default function AgendaPage() {
             <select
               value={selectedBarber}
               onChange={(e) => setSelectedBarber(e.target.value)}
-              className="rounded-lg border border-white/[0.06] bg-zinc-800/60 px-3 py-2 text-[12.5px] text-zinc-300 outline-none focus:border-gold-b"
+              className="flex-1 rounded-lg border border-white/[0.06] bg-zinc-800/60 px-3 py-2 text-[12.5px] text-zinc-300 outline-none focus:border-gold-b sm:flex-none"
             >
               <option value="all">Todos los barberos</option>
               {barbers.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
-            <button
-              onClick={() => setShowNewAppt(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-gold-b bg-gold-subtle px-4 py-2 text-[12.5px] font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)]"
-            >
-              <Plus size={13} />
-              Nueva cita
-            </button>
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats — "Citas semana" es correcto porque la query trae toda la semana */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "Citas hoy", value: todayAppts.length, color: "text-zinc-100" },
-            { label: "Confirmadas", value: confirmed, color: "text-emerald-400" },
-            { label: "Pendientes", value: pending, color: "text-amber-400" },
-            { label: "Ingreso estimado", value: formatCOP(ingresoHoy), color: "text-gold-light" },
+            { label: "Citas semana", value: todayAppts.length, color: "text-zinc-100" },
+            { label: "Confirmadas",  value: confirmed,          color: "text-emerald-400" },
+            { label: "Pendientes",   value: pending,            color: "text-amber-400" },
+            { label: "Ingreso est.", value: formatCOP(ingresoHoy), color: "text-gold-light" },
           ].map(({ label, value, color }) => (
-            <div key={label} className="rounded-xl border border-white/[0.04] bg-[#111113] px-4 py-3.5">
-              <div className="text-[10.5px] uppercase tracking-wider text-zinc-600">{label}</div>
-              <div className={`mt-1 text-[20px] font-semibold ${color}`}>{value}</div>
+            <div key={label} className="rounded-xl border border-white/[0.04] bg-[#111113] px-3 py-3 sm:px-4 sm:py-3.5">
+              <div className="text-[10px] uppercase tracking-wider text-zinc-600 sm:text-[10.5px]">{label}</div>
+              <div className={`mt-1 text-[18px] font-semibold sm:text-[20px] ${color}`}>{value}</div>
             </div>
           ))}
         </div>
@@ -504,7 +511,8 @@ export default function AgendaPage() {
           ) : view === "lista" ? (
             /* List view */
             <div>
-              <div className="grid grid-cols-[160px_1fr_150px_120px_120px] gap-3 border-b border-white/[0.04] px-5 py-3">
+              {/* Desktop table header */}
+              <div className="hidden grid-cols-[120px_1fr_140px_110px_110px] gap-3 border-b border-white/[0.04] px-5 py-3 sm:grid">
                 {["Hora", "Cliente", "Servicio", "Barbero", "Estado"].map((h) => (
                   <div key={h} className="text-[10px] uppercase tracking-wider text-zinc-600">{h}</div>
                 ))}
@@ -523,21 +531,45 @@ export default function AgendaPage() {
                       <div
                         key={appt.id}
                         onClick={() => setSelectedAppt(appt)}
-                        className="grid cursor-pointer grid-cols-[160px_1fr_150px_120px_120px] items-center gap-3 border-b border-white/[0.03] px-5 py-3.5 transition hover:bg-zinc-800/30"
+                        className="cursor-pointer border-b border-white/[0.03] transition hover:bg-zinc-800/30"
                       >
-                        <div className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-300">
-                          <Clock size={12} className="text-zinc-600" />
-                          {start.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+                        {/* Desktop row */}
+                        <div className="hidden grid-cols-[120px_1fr_140px_110px_110px] items-center gap-3 px-5 py-3.5 sm:grid">
+                          <div className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-300">
+                            <Clock size={12} className="text-zinc-600" />
+                            {start.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                          <div>
+                            <div className="text-[13px] font-medium text-zinc-100">{appt.client.name}</div>
+                            <div className="text-[11px] text-zinc-600">{appt.client.phone}</div>
+                          </div>
+                          <div className="text-[12.5px] text-zinc-400">{appt.service.name}</div>
+                          <div className="text-[12.5px] text-zinc-400">{appt.barber.name.split(" ")[0]}</div>
+                          <div className="flex items-center gap-1.5">
+                            {STATUS_ICON[appt.status]}
+                            <span className="text-[11px] font-medium" style={{ color: cfg.color }}>{cfg.label}</span>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-[13px] font-medium text-zinc-100">{appt.client.name}</div>
-                          <div className="text-[11px] text-zinc-600">{appt.client.phone}</div>
-                        </div>
-                        <div className="text-[12.5px] text-zinc-400">{appt.service.name}</div>
-                        <div className="text-[12.5px] text-zinc-400">{appt.barber.name.split(" ")[0]}</div>
-                        <div className="flex items-center gap-1.5">
-                          {STATUS_ICON[appt.status]}
-                          <span className="text-[11px] font-medium" style={{ color: cfg.color }}>{cfg.label}</span>
+                        {/* Mobile card */}
+                        <div className="flex items-start justify-between gap-2 px-4 py-3.5 sm:hidden">
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-zinc-700 text-[10px] font-medium text-zinc-400">
+                              {appt.client.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="text-[13px] font-medium text-zinc-100">{appt.client.name}</div>
+                              <div className="text-[11px] text-zinc-500">{appt.service.name} · {appt.barber.name.split(" ")[0]}</div>
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <div className="text-[12px] tabular-nums text-zinc-400">
+                              {start.toLocaleDateString("es-CO", { day: "numeric", month: "short" })} · {start.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+                            </div>
+                            <div className="mt-0.5 flex items-center justify-end gap-1">
+                              {STATUS_ICON[appt.status]}
+                              <span className="text-[10.5px] font-medium" style={{ color: cfg.color }}>{cfg.label}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );

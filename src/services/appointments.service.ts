@@ -7,6 +7,19 @@ import {
 } from "@/src/lib/whatsapp";
 import type { CreateAppointmentDTO, DashboardStats } from "@/src/types";
 
+// ── Colombia timezone (UTC-5, sin horario de verano) ─────────────────────────
+const CO_OFFSET_MS = 5 * 60 * 60_000; // 5 h en ms
+
+/** Inicio del día "hoy" en Colombia como timestamp UTC.
+ *  Medianoche Bogotá = 05:00 UTC */
+function colStartOfToday(now: Date): Date {
+  const coNow = new Date(now.getTime() - CO_OFFSET_MS);
+  const y = coNow.getUTCFullYear();
+  const m = coNow.getUTCMonth();
+  const d = coNow.getUTCDate();
+  return new Date(Date.UTC(y, m, d, 5, 0, 0, 0));
+}
+
 type SchedulerContext = {
   tenantId: string;
   tenantSlug: string;
@@ -273,12 +286,11 @@ export async function getDashboardStats(
   context: Pick<SchedulerContext, "tenantId" | "barbershopId">,
 ): Promise<DashboardStats> {
   const now = new Date();
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-  const todayEnd = new Date(today);
-  todayEnd.setHours(23, 59, 59, 999);
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
+  // Usar Colombia (UTC-5) para definir "hoy" — garantiza consistencia con el
+  // frontend y evita que citas vespertinas caigan en el día UTC equivocado.
+  const today     = colStartOfToday(now);
+  const todayEnd  = new Date(today.getTime() + 24 * 60 * 60_000 - 1);
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60_000);
 
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);

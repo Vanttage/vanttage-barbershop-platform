@@ -33,16 +33,15 @@ export async function GET(request: NextRequest) {
     barbershopId: ctx.barbershopId,
   };
 
+  // Colombia es UTC-5 → medianoche Bogotá = 05:00 UTC.
+  // Todas las fechas que llegan del cliente son dates en zona Colombia.
+  const coStart = (d: string) => new Date(`${d}T05:00:00.000Z`);
+  const coEnd   = (d: string) => new Date(coStart(d).getTime() + 24 * 60 * 60_000 - 1);
+
   if (dateFrom && dateTo) {
-    where.startsAt = {
-      gte: new Date(`${dateFrom}T00:00:00.000Z`),
-      lte: new Date(`${dateTo}T23:59:59.999Z`),
-    };
+    where.startsAt = { gte: coStart(dateFrom), lte: coEnd(dateTo) };
   } else if (date) {
-    where.startsAt = {
-      gte: new Date(`${date}T00:00:00.000Z`),
-      lte: new Date(`${date}T23:59:59.999Z`),
-    };
+    where.startsAt = { gte: coStart(date), lte: coEnd(date) };
   }
 
   if (barberId) where.barberId = barberId;

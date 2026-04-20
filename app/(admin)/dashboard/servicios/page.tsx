@@ -252,7 +252,7 @@ export default function ServiciosPage() {
       {modal === "edit" && selected && <ServiceModal service={selected} onClose={closeModal} onSaved={afterSave} />}
       {modal === "delete" && selected && <DeleteConfirm service={selected} onClose={closeModal} onDeleted={afterSave} />}
 
-      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-7 py-6">
+      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-5 sm:px-7 sm:py-6">
         {/* Metrics */}
         <div className="grid gap-3 sm:grid-cols-4">
           {[

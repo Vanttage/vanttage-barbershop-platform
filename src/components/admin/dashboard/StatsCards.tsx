@@ -20,7 +20,7 @@ function StatCard({ label, value, delta, deltaLabel, accent, icon, loading }: St
   return (
     <div
       className={[
-        "flex cursor-default flex-col gap-3 rounded-xl border p-5 transition-all duration-200 hover:-translate-y-px",
+        "flex cursor-default flex-col gap-3 rounded-xl border p-4 transition-all duration-200 hover:-translate-y-px sm:p-5",
         accent
           ? "border-gold/20 bg-gradient-to-br from-gold/10 to-gold/[0.03] hover:border-gold/40"
           : "border-white/[0.04] bg-[#111113] hover:border-white/[0.08]",
@@ -75,7 +75,7 @@ export default function StatsCards() {
   const { data, loading } = useApi<DashboardStats>("/api/dashboard");
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       <StatCard
         label="Ingresos del mes"
         value={data ? formatCOP(data.ingresosMes) : "$0"}

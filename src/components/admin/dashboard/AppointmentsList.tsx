@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useApiList, apiCall } from "@/src/hooks/useApi";
 import { formatCOP } from "@/src/types";
 import type { AppointmentWithRelations, AppointmentStatus } from "@/src/types";
@@ -18,8 +19,14 @@ const FILTERS: { label: string; value: AppointmentStatus | "all" }[] = [
 
 const STATUS_ACTIONS: AppointmentStatus[] = ["confirmed", "in_progress", "completed", "cancelled"];
 
-// Fijo fuera del componente → no se recrea en cada render
-const today = new Date().toISOString().slice(0, 10);
+// Fecha de hoy en Colombia (UTC-5) — se evalúa al cargar la página en el navegador.
+// Usar Colombia evita que citas vespertinas (p.ej. 8pm CO = 1am UTC siguiente)
+// aparezcan en el día incorrecto.
+function getColombiaToday(): string {
+  const co = new Date(Date.now() - 5 * 60 * 60_000);
+  return co.toISOString().slice(0, 10);
+}
+const today = getColombiaToday();
 
 function getInitials(name: string) {
   return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -174,6 +181,7 @@ const AppointmentCard = memo(function AppointmentCard({
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function AppointmentsList() {
+  const router = useRouter();
   const [filter, setFilter] = useState<AppointmentStatus | "all">("all");
 
   // La URL solo cambia cuando cambia el filtro → useApiList no refetch por otros motivos
@@ -223,6 +231,7 @@ export default function AppointmentsList() {
         </div>
         <button
           type="button"
+          onClick={() => router.push("/dashboard/agenda")}
           className="flex items-center gap-1.5 rounded-lg border border-gold/20 bg-gold-subtle px-3.5 py-1.5 text-[12.5px] font-medium text-gold-light transition hover:bg-gold/[0.18]"
         >
           <Plus size={13} />

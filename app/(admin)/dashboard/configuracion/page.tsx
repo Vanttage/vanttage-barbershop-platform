@@ -152,7 +152,7 @@ export default function ConfiguracionPage() {
     <div className="flex min-h-screen flex-1 flex-col bg-zinc-950">
       <Header title="Configuracion" />
 
-      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-7 py-6">
+      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-5 sm:px-7 sm:py-6">
         <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
           {/* Form */}
           <div className="rounded-2xl border border-white/[0.05] bg-[#111113] p-6">

@@ -368,7 +368,7 @@ export default function ClientesPage() {
         <DeleteConfirm client={selected} onClose={closeModal} onDeleted={afterDelete} />
       )}
 
-      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-7 py-6">
+      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-5 sm:px-7 sm:py-6">
         {/* Metrics */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
