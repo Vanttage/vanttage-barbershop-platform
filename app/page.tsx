@@ -1,116 +1,117 @@
 import Link from "next/link";
 
-const features = [
-  "Agenda online por barbero y sede",
-  "Pagos, historial y clientes frecuentes",
-  "Dashboard operativo con metricas de negocio",
-  "Automatizaciones por WhatsApp y correo",
-];
-
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <section className="relative overflow-hidden border-b border-white/[0.05]">
-
-        {/* Luz dorada superior — respira */}
+    <main className="min-h-screen bg-[#0b0b0c] text-zinc-100">
+      <section className="relative overflow-hidden">
+        {/* Glow top */}
         <div
-          className="home-glow pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 70% 45% at 50% -8%, rgba(182,134,44,0.22), transparent)",
+              "radial-gradient(ellipse 60% 40% at 50% -10%, rgba(182,134,44,0.18), transparent)",
           }}
         />
 
-        {/* Orbe ambiente inferior-derecho */}
-        <div
-          className="home-orb pointer-events-none absolute -bottom-24 -right-24 h-[600px] w-[600px] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(182,134,44,0.07) 0%, transparent 70%)",
-            filter: "blur(60px)",
-          }}
-        />
+        {/* subtle grid */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.03] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:40px_40px]" />
 
-        <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-20 lg:flex-row lg:items-center lg:gap-16">
-
-          {/* Left */}
-          <div className="max-w-2xl">
-            <p className="home-badge mb-4 text-xs font-medium uppercase tracking-[0.25em] text-gold">
-              SaaS para barberias
+        <div className="relative mx-auto max-w-6xl px-6 py-12">
+          {/* HERO CENTER */}
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="mb-6 text-xs uppercase tracking-[0.2em] text-gold/70">
+              Software para barberías
             </p>
-            <h1 className="home-h1 font-display text-5xl font-semibold leading-tight text-zinc-50 md:text-6xl">
-              Gestiona agenda, equipo y clientes sin perder el estilo.
+
+            <h1 className="font-display text-5xl font-semibold leading-tight md:text-6xl">
+              Tu barbería,
+              <br />
+              en control total.
             </h1>
-            <p className="home-p mt-6 max-w-xl text-base leading-7 text-zinc-400">
-              VANTTAGE centraliza reservas, operacion diaria, pagos y fidelizacion
-              en una sola plataforma lista para crecimiento multi-sede.
+
+            <p className="mt-6 text-base text-zinc-400">
+              Agenda, clientes y pagos organizados en un solo lugar. Menos caos.
+              Más ingresos.
             </p>
-            <div className="home-ctas mt-8 flex flex-wrap gap-3">
+
+            <div className="mt-8 flex justify-center gap-3">
               <Link
                 href="/register"
-                className="rounded-xl border border-gold-b bg-gold-subtle px-5 py-3 text-sm font-medium text-gold-light transition hover:bg-[rgba(182,134,44,0.18)]"
+                className="rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-black transition hover:scale-[1.04]"
               >
-                Crear barberia
+                Empezar gratis
               </Link>
+
               <Link
                 href="/login"
-                className="rounded-xl border border-white/[0.08] px-5 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/[0.18] hover:bg-white/[0.03]"
+                className="rounded-xl border border-white/[0.1] px-5 py-3 text-sm text-zinc-300 transition hover:bg-white/[0.05]"
               >
-                Entrar al panel
+                Iniciar sesión
               </Link>
             </div>
           </div>
 
-          {/* Right — card */}
-          <div className="home-card relative mt-12 lg:mt-0 lg:w-[30rem]">
-            <div
-              className="home-orb pointer-events-none absolute -inset-6 rounded-[3rem]"
-              style={{
-                background:
-                  "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(182,134,44,0.08), transparent)",
-                filter: "blur(24px)",
-              }}
-            />
-            <div className="relative grid gap-4 rounded-[2rem] border border-white/[0.06] bg-[#111113]/90 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
-              <div className="rounded-2xl border border-white/[0.05] bg-zinc-900/70 p-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-zinc-300">Operacion del dia</span>
-                  <span className="home-online rounded-full bg-emerald-400/10 px-2 py-1 text-xs text-emerald-400">
-                    En linea
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
+          {/* PRODUCT PREVIEW */}
+          <div className="relative mx-auto mt-20 max-w-5xl">
+            {/* glow behind */}
+            <div className="pointer-events-none absolute -inset-10 rounded-[3rem] bg-gold/5 blur-3xl" />
+
+            <div className="relative rounded-[2rem] border border-white/[0.08] bg-[#111113]/80 p-6 shadow-[0_40px_120px_rgba(0,0,0,0.6)] backdrop-blur">
+              {/* top bar */}
+              <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
+                <p className="text-sm text-zinc-400">Hoy en la barbería</p>
+                <span className="text-xs text-emerald-400">● Abierto</span>
+              </div>
+
+              {/* content */}
+              <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                {/* left: schedule */}
+                <div className="space-y-3">
                   {[
-                    ["Citas", "24"],
-                    ["Ingresos", "$1.2M"],
-                    ["Clientes", "136"],
-                    ["Asistencia", "92%"],
-                  ].map(([label, value], i) => (
+                    ["10:00", "Juan", "Fade"],
+                    ["10:30", "Luis", "Barba"],
+                    ["11:00", "Carlos", "Corte"],
+                    ["11:30", "Andrés", "Fade + Barba"],
+                  ].map(([time, name, service]) => (
+                    <div
+                      key={time}
+                      className="flex items-center justify-between rounded-xl border border-white/[0.05] bg-zinc-950/70 px-4 py-3"
+                    >
+                      <div>
+                        <p className="text-sm text-zinc-200">
+                          {time} · {name}
+                        </p>
+                        <p className="text-xs text-zinc-500">{service}</p>
+                      </div>
+                      <span className="text-xs text-emerald-400">
+                        Confirmado
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* right: stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    ["Cortes hoy", "26"],
+                    ["Ingresos", "$1.4M"],
+                    ["Clientes", "19"],
+                    ["Ocupación", "94%"],
+                  ].map(([label, value]) => (
                     <div
                       key={label}
-                      className={`home-stat-${i} rounded-xl border border-white/[0.05] bg-zinc-950/70 p-3`}
+                      className="rounded-xl border border-white/[0.05] bg-zinc-950/70 p-4"
                     >
-                      <p className="text-xs uppercase tracking-[0.14em] text-zinc-600">{label}</p>
-                      <p className="mt-2 text-xl font-medium text-zinc-100">{value}</p>
+                      <p className="text-xs text-zinc-500">{label}</p>
+                      <p className="mt-2 text-xl font-medium">{value}</p>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/[0.05] bg-zinc-900/70 p-5">
-                <p className="text-xs uppercase tracking-[0.14em] text-zinc-600">Incluye</p>
-                <div className="mt-4 space-y-3">
-                  {[
-                    "Agenda online por barbero y sede",
-                    "Pagos, historial y clientes frecuentes",
-                    "Dashboard operativo con metricas de negocio",
-                    "Automatizaciones por WhatsApp y correo",
-                  ].map((item, i) => (
-                    <div key={item} className={`home-feat-${i} flex items-center gap-3`}>
-                      <span className={`home-dot-${i} h-2 w-2 flex-shrink-0 rounded-full bg-gold`} />
-                      <span className="text-sm text-zinc-300">{item}</span>
-                    </div>
-                  ))}
-                </div>
+
+              {/* bottom subtle */}
+              <div className="mt-6 border-t border-white/[0.05] pt-4 text-xs text-zinc-500">
+                Todo sincronizado en tiempo real
               </div>
             </div>
           </div>

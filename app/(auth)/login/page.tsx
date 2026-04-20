@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 const ROLE_DESTINATIONS: Record<string, string> = {
   superadmin: "/superadmin",
@@ -10,21 +13,24 @@ const ROLE_DESTINATIONS: Record<string, string> = {
   client:     "/",
 };
 
-export default function LoginPage() {
-  // useEffect evita hydration mismatch — los searchParams solo existen en cliente
-  const [rawCallback, setRawCallback] = useState("");
+// ── Componente interno que usa useSearchParams (requiere Suspense padre) ──────
+function LoginPageContent() {
+  const searchParams = useSearchParams();
+  const rawCallback  = searchParams.get("callbackUrl") ?? "";
+
+  const [mounted, setMounted]   = useState(false);
   const [form, setForm]         = useState({ email: "", password: "" });
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
   const [showPass, setShowPass] = useState(false);
 
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search);
-    setRawCallback(p.get("callbackUrl") ?? "");
-  }, []);
+  // mounted evita hydration mismatch causado por password managers
+  // (1Password, Chrome, etc.) que inyectan elementos en el DOM antes de hidratar
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setLoading(true);
     setError("");
 
@@ -55,16 +61,16 @@ export default function LoginPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0a0a0a] px-6">
 
-      {/* Glow dorado superior */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_-10%,rgba(182,134,44,0.18),transparent)]" />
+      {/* Glow dorado */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_-10%,rgba(182,134,44,0.15),transparent)]" />
 
-      {/* Grid sutil — inline style evita problemas de hydration con clases arbitrarias */}
+      {/* Grid sutil — inline style para evitar diferencias de parsing SSR/cliente */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
-            "linear-gradient(to right,#ffffff 1px,transparent 1px),linear-gradient(to bottom,#ffffff 1px,transparent 1px)",
+            "linear-gradient(to right,#fff 1px,transparent 1px),linear-gradient(to bottom,#fff 1px,transparent 1px)",
           backgroundSize: "40px 40px",
         }}
       />
@@ -73,98 +79,81 @@ export default function LoginPage() {
 
         {/* ── LOGO ── */}
         <div className="mb-10 text-center">
-          <p className="font-display text-[32px] font-semibold tracking-[0.18em] text-gold drop-shadow-[0_0_22px_rgba(182,134,44,0.5)]">
+          <div className="font-display text-[30px] font-semibold tracking-[0.18em] text-gold">
             VANTTAGE
-          </p>
-          <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-zinc-600">
+          </div>
+          <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-zinc-600">
             Acceso a tu operación
-          </p>
+          </div>
         </div>
 
         {/* ── CARD ── */}
-        <div className="rounded-[2rem] border border-white/[0.06] bg-[#111113]/90 p-8 shadow-[0_40px_120px_rgba(0,0,0,0.7)] backdrop-blur-xl">
+        <div className="rounded-[2rem] border border-white/[0.06] bg-[#111113]/90 p-8 shadow-[0_40px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl">
 
           <div className="mb-7">
             <h1 className="font-display text-[26px] font-semibold text-zinc-100">
-              Inicia sesión
+              Iniciar sesión
             </h1>
-            <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">
-              Gestiona tu barbería sin fricción desde cualquier dispositivo.
+            <p className="mt-2 text-sm text-zinc-500">
+              Accede a tu panel de gestión.
             </p>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
 
             {/* EMAIL */}
-            <div>
-              <label className="mb-1.5 block text-[11px] uppercase tracking-[0.14em] text-zinc-500">
-                Email
-              </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <input
                 type="email"
                 autoComplete="email"
                 value={form.email}
                 onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                placeholder="admin@barberia.co"
+                placeholder="Email"
                 required
-                className="w-full rounded-xl border border-white/[0.08] bg-zinc-900/60 px-4 py-3 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600 focus:border-gold/60 focus:bg-zinc-900 focus:ring-1 focus:ring-gold/20"
+                className="w-full rounded-xl border border-white/[0.08] bg-zinc-900/60 py-3 pl-10 pr-4 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600 focus:border-gold/60 focus:ring-1 focus:ring-gold/20"
               />
             </div>
 
             {/* PASSWORD */}
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <label className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">
+                <span className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">
                   Contraseña
-                </label>
+                </span>
                 <Link
                   href="/forgot-password"
-                  className="text-[11px] text-zinc-500 transition hover:text-gold"
+                  className="text-xs text-zinc-500 transition hover:text-gold"
                 >
                   Recuperar
                 </Link>
               </div>
+
               <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                 <input
                   type={showPass ? "text" : "password"}
                   autoComplete="current-password"
                   value={form.password}
                   onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="••••••••"
                   required
-                  className="w-full rounded-xl border border-white/[0.08] bg-zinc-900/60 px-4 py-3 pr-11 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600 focus:border-gold/60 focus:bg-zinc-900 focus:ring-1 focus:ring-gold/20"
+                  className="w-full rounded-xl border border-white/[0.08] bg-zinc-900/60 py-3 pl-10 pr-11 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600 focus:border-gold/60 focus:ring-1 focus:ring-gold/20"
                 />
-                {/* Toggle mostrar/ocultar contraseña */}
                 <button
                   type="button"
                   onClick={() => setShowPass((v) => !v)}
                   tabIndex={-1}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-600 transition hover:text-zinc-300"
                 >
-                  {showPass ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
-                    </svg>
-                  ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  )}
+                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </div>
 
             {/* ERROR */}
             {error && (
-              <div className="flex items-center gap-2.5 rounded-xl border border-red-400/20 bg-red-400/[0.08] px-4 py-3 text-sm text-red-300">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
+              <div className="rounded-lg border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300">
                 {error}
               </div>
             )}
@@ -173,24 +162,27 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 w-full rounded-xl bg-gold py-3 text-sm font-semibold text-black shadow-[0_8px_24px_rgba(182,134,44,0.3)] transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gold py-3 text-sm font-semibold text-black shadow-[0_8px_24px_rgba(182,134,44,0.3)] transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
+                <>
                   <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                   </svg>
                   Ingresando...
-                </span>
+                </>
               ) : (
-                "Entrar al panel"
+                <>
+                  Entrar
+                  <ArrowRight className="h-4 w-4" />
+                </>
               )}
             </button>
 
           </form>
         </div>
 
-        {/* FOOTER */}
+        {/* ── FOOTER ── */}
         <p className="mt-6 text-center text-sm text-zinc-600">
           ¿No tienes cuenta?{" "}
           <Link href="/register" className="font-medium text-gold/80 transition hover:text-gold">
@@ -200,5 +192,18 @@ export default function LoginPage() {
 
       </div>
     </div>
+  );
+}
+
+// ── Wrapper con Suspense — requerido por useSearchParams en Next.js 14 ────────
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]" />
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

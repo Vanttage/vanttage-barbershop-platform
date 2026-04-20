@@ -34,7 +34,15 @@
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(npm list *)",
-      "Bash(npm uninstall *)"
+      "Bash(npm uninstall *)",
+      "Bash(dir \"C:\\\\dev\\\\VANTTAGE\\\\vanttage_peluquerias\\\\app\\\\[slug]\" /s /b)",
+      "Bash(Get-ChildItem \"C:\\\\dev\\\\VANTTAGE\\\\vanttage_peluquerias\\\\app\\\\[slug]\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "Bash(loading\\\\.tsx)",
+      "Bash(layout\\\\.tsx\")",
+      "Bash(node -e ' *)",
+      "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k,v\\) for k,v in {**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}.items\\(\\) if 'qr' in k.lower\\(\\)]\")"
     ]
   }
 }
