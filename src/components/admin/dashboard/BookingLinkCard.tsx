@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import { Link2, Copy, Check } from "lucide-react";
-import { useSidebar } from "./DashboardShell";
 
-export default function BookingLinkCard() {
-  const { shop, shopLoading } = useSidebar();
+interface Props {
+  tenantSlug: string;
+}
+
+export default function BookingLinkCard({ tenantSlug }: Props) {
   const [copied, setCopied] = useState(false);
 
-  if (shopLoading || !shop?.tenantSlug) return null;
+  if (!tenantSlug) return null;
 
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "";
-  const bookingUrl = `${origin}/${shop.tenantSlug}/reservar`;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const bookingUrl = `${origin}/${tenantSlug}/reservar`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(bookingUrl).catch(() => {});
