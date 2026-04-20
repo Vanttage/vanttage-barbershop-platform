@@ -1,10 +1,16 @@
 import React from "react";
+import dynamic from "next/dynamic";
 import AppointmentsList from "@/src/components/admin/dashboard/AppointmentsList";
 import BarbersPanel from "@/src/components/admin/dashboard/BarbersPanel";
-import BookingLinkCard from "@/src/components/admin/dashboard/BookingLinkCard";
 import Header from "@/src/components/admin/dashboard/Header";
 import StatsCards from "@/src/components/admin/dashboard/StatsCards";
 import WeeklyChart from "@/src/components/admin/dashboard/WeeklyChart";
+
+// Loaded purely client-side to avoid RSC module-graph issues
+const BookingLinkCard = dynamic(
+  () => import("@/src/components/admin/dashboard/BookingLinkCard"),
+  { ssr: false },
+);
 
 export const metadata = { title: "Dashboard · VANTTAGE" };
 

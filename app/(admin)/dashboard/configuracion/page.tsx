@@ -72,6 +72,7 @@ export default function ConfiguracionPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [qrDownloading, setQrDownloading] = useState(false);
 
   const [form, setForm] = useState<FormData>({
     tenantName: "",
@@ -108,8 +109,8 @@ export default function ConfiguracionPage() {
     });
   }, [data]);
 
-  const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? "vanttage.app";
-  const bookingUrl = data?.tenantSlug ? `https://${data.tenantSlug}.${baseDomain}` : "";
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  const bookingUrl = data?.tenantSlug ? `${appUrl}/${data.tenantSlug}/reservar` : "";
 
   const set = (key: keyof FormData) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -134,6 +135,62 @@ export default function ConfiguracionPage() {
     navigator.clipboard.writeText(bookingUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // URL del QR generado por api.qrserver.com (sin npm extra)
+  const qrImageUrl = bookingUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(bookingUrl)}&size=400x400&margin=16&color=FFFFFF&bgcolor=111113&format=png`
+    : "";
+
+  const downloadQr = async () => {
+    if (!qrImageUrl || !bookingUrl) return;
+    setQrDownloading(true);
+    try {
+      const res = await fetch(qrImageUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `qr-reservas-${data?.tenantSlug ?? "barberia"}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // fallback: abrir en nueva pestaña
+      window.open(qrImageUrl, "_blank");
+    } finally {
+      setQrDownloading(false);
+    }
+  };
+
+  const printQr = () => {
+    if (!qrImageUrl || !bookingUrl) return;
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>QR Reservas · ${data?.barbershopName ?? "Barbería"}</title>
+          <style>
+            body { margin: 0; display: flex; flex-direction: column; align-items: center;
+                   justify-content: center; min-height: 100vh; font-family: sans-serif;
+                   background: #fff; color: #000; padding: 32px; box-sizing: border-box; }
+            h1  { font-size: 22px; font-weight: 700; margin: 0 0 4px; text-align: center; }
+            p   { font-size: 13px; color: #555; margin: 0 0 24px; text-align: center; }
+            img { width: 260px; height: 260px; border: 1px solid #e5e7eb; border-radius: 12px; }
+            small { margin-top: 16px; font-size: 11px; color: #888; word-break: break-all; text-align: center; max-width: 280px; }
+          </style>
+        </head>
+        <body>
+          <h1>${data?.barbershopName ?? "Reserva tu cita"}</h1>
+          <p>Escanea el código QR para reservar</p>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(bookingUrl)}&size=400x400&margin=20&format=png" />
+          <small>${bookingUrl}</small>
+          <script>window.onload = () => { window.print(); }<\/script>
+        </body>
+      </html>
+    `);
+    win.document.close();
   };
 
   const checklist = [
@@ -336,17 +393,19 @@ export default function ConfiguracionPage() {
               </div>
             </section>
 
-            {/* Booking URL */}
+            {/* Booking URL + QR */}
             <section className="rounded-2xl border border-white/[0.05] bg-[#111113] p-5">
-              <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-100">
+              <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-zinc-100">
                 <ExternalLink size={14} className="text-zinc-600" />
-                Booking publico
+                Link de reservas
               </h3>
               <p className="mb-4 text-xs text-zinc-500">
-                Comparte este link en tu bio, WhatsApp o anuncios para que los clientes reserven directamente.
+                Comparte el link o el QR en tu bio, WhatsApp o imprímelo en tu local.
               </p>
+
+              {/* URL row */}
               <div className="flex items-center gap-2 overflow-hidden rounded-xl border border-white/[0.06] bg-zinc-900/70">
-                <span className="flex-1 truncate px-4 py-3 text-[12px] text-zinc-300">
+                <span className="flex-1 truncate px-4 py-3 font-mono text-[11.5px] text-zinc-300">
                   {bookingUrl || "Cargando..."}
                 </span>
                 <div className="flex flex-shrink-0 items-center gap-1 pr-2">
@@ -364,13 +423,62 @@ export default function ConfiguracionPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="rounded-lg p-2 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200"
-                      title="Abrir en nueva pestana"
+                      title="Abrir en nueva pestaña"
                     >
                       <ExternalLink size={13} />
                     </a>
                   )}
                 </div>
               </div>
+
+              {/* QR Code */}
+              {bookingUrl && (
+                <div className="mt-4 flex flex-col items-center gap-3">
+                  <div className="rounded-2xl border border-white/[0.06] bg-zinc-900/60 p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrImageUrl}
+                      alt="QR de reservas"
+                      width={160}
+                      height={160}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <p className="text-center text-[11px] text-zinc-600">
+                    Escanea para reservar directamente
+                  </p>
+                  {/* Action buttons */}
+                  <div className="flex w-full gap-2">
+                    <button
+                      type="button"
+                      onClick={downloadQr}
+                      disabled={qrDownloading}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/[0.06] bg-zinc-800/60 px-3 py-2 text-[12px] font-medium text-zinc-300 transition hover:bg-zinc-700/60 disabled:opacity-50"
+                    >
+                      {/* Download icon */}
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      {qrDownloading ? "Descargando..." : "Descargar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={printQr}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gold/20 bg-gold-subtle px-3 py-2 text-[12px] font-medium text-gold-light transition hover:bg-gold/[0.18]"
+                    >
+                      {/* Print icon */}
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        <rect x="6" y="14" width="12" height="8" />
+                      </svg>
+                      Imprimir
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* Checklist */}
