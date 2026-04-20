@@ -1,6 +1,4 @@
 import React from "react";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/src/lib/auth";
 import AppointmentsList from "@/src/components/admin/dashboard/AppointmentsList";
 import BarbersPanel from "@/src/components/admin/dashboard/BarbersPanel";
 import BookingLinkCard from "@/src/components/admin/dashboard/BookingLinkCard";
@@ -49,15 +47,12 @@ function AutoStatus() {
   );
 }
 
-export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-  const tenantSlug = session?.user?.tenantSlug ?? "";
-
+export default function DashboardPage() {
   return (
     <div className="flex flex-col flex-1 min-h-screen bg-zinc-950">
       <Header title="Dashboard" />
       <main className="flex-1 px-4 py-5 pb-10 flex flex-col gap-4 max-w-[1440px] w-full mx-auto sm:px-6 sm:py-7 sm:gap-5">
-        {tenantSlug && <BookingLinkCard tenantSlug={tenantSlug} />}
+        <BookingLinkCard />
         <AutoStatus />
         <StatsCards />
         <div className="grid grid-cols-1 gap-4 items-start sm:gap-5 xl:grid-cols-[1fr_300px]">
