@@ -19,14 +19,14 @@ import {
 import { useSidebar } from "./DashboardShell";
 
 const ownerNavItems = [
-  { label: "Dashboard",        href: "/dashboard",                  icon: LayoutDashboard },
-  { label: "Agenda",           href: "/dashboard/agenda",           icon: CalendarDays    },
-  { label: "Clientes",         href: "/dashboard/clientes",         icon: Users           },
-  { label: "Barberos",         href: "/dashboard/barberos",         icon: Scissors        },
-  { label: "Servicios",        href: "/dashboard/servicios",        icon: Layers          },
-  { label: "Pagos",            href: "/dashboard/pagos",            icon: CreditCard      },
-  { label: "Automatizaciones", href: "/dashboard/automatizaciones", icon: Zap             },
-  { label: "Configuración",    href: "/dashboard/configuracion",    icon: Settings        },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Agenda", href: "/dashboard/agenda", icon: CalendarDays },
+  { label: "Clientes", href: "/dashboard/clientes", icon: Users },
+  { label: "Barberos", href: "/dashboard/barberos", icon: Scissors },
+  { label: "Servicios", href: "/dashboard/servicios", icon: Layers },
+  { label: "Pagos", href: "/dashboard/pagos", icon: CreditCard },
+  { label: "Automatizaciones", href: "/dashboard/automatizaciones", icon: Zap },
+  { label: "Configuración", href: "/dashboard/configuracion", icon: Settings },
 ];
 
 const superadminNavItems = [
@@ -36,75 +36,102 @@ const superadminNavItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  // ── shop viene del contexto — SIN fetch propio ───────────────────────────
   const { mobileOpen, close, collapsed, setCollapsed, shop } = useSidebar();
 
   const isSuperadmin = session?.user.role === "superadmin";
   const items = isSuperadmin ? superadminNavItems : ownerNavItems;
 
-  const sidebarW = collapsed ? "w-14" : "w-60";
+  const sidebarW = collapsed ? "w-[64px]" : "w-[240px]";
 
   return (
     <aside
       className={[
-        "fixed inset-y-0 left-0 z-40 flex flex-shrink-0 flex-col",
-        "border-r border-white/[0.05] bg-[#111113]",
+        "fixed inset-y-0 left-0 z-40 flex flex-col",
+        "border-r border-white/[0.06] bg-[#0B0B0E]",
         "transition-all duration-300 ease-in-out",
         sidebarW,
         mobileOpen ? "translate-x-0" : "-translate-x-full",
         "lg:translate-x-0",
       ].join(" ")}
     >
-      {/* ── Brand row ─────────────────────────────────────────────── */}
+      {/* Brand */}
       <div
         className={[
-          "flex shrink-0 items-center border-b border-white/[0.05]",
-          collapsed ? "h-[60px] justify-center" : "h-[60px] justify-between px-4",
+          "flex h-[64px] items-center border-b border-white/[0.06] transition-all duration-300",
+          collapsed ? "justify-center" : "justify-between px-4",
         ].join(" ")}
       >
-        {collapsed ? (
-          <span className="font-display text-[18px] font-bold text-gold">V</span>
-        ) : (
-          <div className="min-w-0 flex-1 px-1">
-            <p className="font-display text-[15px] font-bold tracking-[0.12em] text-gold">
+        <div
+          className={[
+            "flex items-center gap-3 min-w-0 transition-all duration-300",
+            collapsed ? "justify-center" : "",
+          ].join(" ")}
+        >
+          {/* LOGO */}
+          <img
+            src="/logo.svg"
+            alt="Vanttage"
+            className="h-8 w-8 shrink-0 object-contain"
+          />
+
+          {/* TEXTO */}
+          <div
+            className={[
+              "overflow-hidden transition-all duration-300",
+              collapsed ? "w-0 opacity-0" : "w-auto opacity-100",
+            ].join(" ")}
+          >
+            <p
+              className="whitespace-nowrap font-display text-transparent bg-clip-text"
+              style={{
+                background: "linear-gradient(90deg, #1EA7FF, #D4AF37)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                fontSize: "16px",
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+              }}
+            >
               VANTTAGE
             </p>
-            <p className="mt-0.5 truncate text-[9.5px] uppercase tracking-[0.16em] text-zinc-600">
-              {isSuperadmin ? "Super Admin" : (shop?.barbershopName ?? "Barbería")}
+            <p className="mt-0.5 truncate text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+              {isSuperadmin
+                ? "Super Admin"
+                : (shop?.barbershopName ?? "Barbería")}
             </p>
           </div>
-        )}
+        </div>
 
-        {/* Desktop collapse toggle */}
+        {/* Collapse toggle */}
         <button
-          type="button"
           onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
-          className="hidden shrink-0 rounded-lg p-1.5 text-zinc-600 transition hover:bg-white/[0.05] hover:text-zinc-300 lg:flex"
+          className="hidden rounded-lg p-2 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200 lg:flex"
         >
           <ChevronLeft
-            size={14}
-            className={["transition-transform duration-300", collapsed ? "rotate-180" : ""].join(" ")}
+            size={16}
+            className={[
+              "transition-transform duration-300",
+              collapsed ? "rotate-180" : "",
+            ].join(" ")}
           />
         </button>
 
-        {/* Mobile close button */}
+        {/* Mobile close */}
         <button
-          type="button"
           onClick={close}
-          aria-label="Cerrar menú"
-          className="shrink-0 rounded-lg p-1.5 text-zinc-600 transition hover:bg-white/[0.05] hover:text-zinc-300 lg:hidden"
+          className="rounded-lg p-2 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200 lg:hidden"
         >
-          <X size={16} />
+          <X size={18} />
         </button>
       </div>
 
-      {/* ── Nav ───────────────────────────────────────────────────── */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
+      {/* Nav */}
+      <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
         {items.map((item) => {
           const Icon = item.icon;
-          const isExact = item.href === "/dashboard" || item.href === "/superadmin";
-          const active  = isExact
+          const isExact =
+            item.href === "/dashboard" || item.href === "/superadmin";
+          const active = isExact
             ? pathname === item.href
             : pathname?.startsWith(item.href);
 
@@ -114,19 +141,27 @@ export default function Sidebar() {
               href={item.href}
               onClick={close}
               title={collapsed ? item.label : undefined}
-              prefetch
               className={[
-                "flex items-center rounded-xl border text-[13px] transition-all duration-150",
-                collapsed
-                  ? "h-10 w-10 justify-center p-0"
-                  : "gap-3 px-3 py-2.5",
+                "group flex items-center rounded-xl border transition-all duration-150",
+                collapsed ? "h-11 justify-center" : "gap-3 px-4 py-3",
                 active
-                  ? "border-gold/25 bg-gold-subtle font-medium text-gold-light"
-                  : "border-transparent text-zinc-500 hover:border-white/[0.06] hover:bg-white/[0.03] hover:text-zinc-200",
+                  ? "border-emerald-400/30 bg-emerald-400/[0.12] text-emerald-300"
+                  : "border-transparent text-zinc-400 hover:border-white/[0.08] hover:bg-white/[0.04] hover:text-zinc-200",
               ].join(" ")}
             >
-              <Icon size={16} className="shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
+              <Icon
+                size={20}
+                className={[
+                  "shrink-0 transition-colors",
+                  active ? "text-emerald-300" : "text-zinc-400",
+                ].join(" ")}
+              />
+
+              {!collapsed && (
+                <span className="truncate text-[14px] font-medium">
+                  {item.label}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -134,3 +169,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+``;

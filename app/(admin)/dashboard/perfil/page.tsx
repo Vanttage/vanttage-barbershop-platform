@@ -47,7 +47,10 @@ export default function PerfilPage() {
   async function handleSave() {
     setSaving(true);
     setError("");
-    const { error: apiError } = await apiCall("/api/profile", "PATCH", { name, phone });
+    const { error: apiError } = await apiCall("/api/profile", "PATCH", {
+      name,
+      phone,
+    });
     setSaving(false);
     if (apiError) {
       setError(apiError);
@@ -57,7 +60,8 @@ export default function PerfilPage() {
     setTimeout(() => setSaved(false), 3000);
   }
 
-  const dirty = profile && (name !== profile.name || phone !== (profile.phone ?? ""));
+  const dirty =
+    profile && (name !== profile.name || phone !== (profile.phone ?? ""));
 
   const joinedDate = profile?.createdAt
     ? new Date(profile.createdAt).toLocaleDateString("es-CO", {
@@ -68,148 +72,173 @@ export default function PerfilPage() {
     : null;
 
   return (
-    <>
+    <div className="relative isolate min-h-screen bg-[#09090B] text-white">
+      {/* Fondo SaaS — MISMO que Dashboard */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.055),transparent_34%)]" />
+        <div className="absolute left-[-10%] top-[-8%] h-[26rem] w-[26rem] rounded-full bg-fuchsia-500/[0.08] blur-3xl" />
+        <div className="absolute bottom-[-12%] right-[-10%] h-[26rem] w-[26rem] rounded-full bg-cyan-500/[0.06] blur-3xl" />
+      </div>
+
       <Header title="Mi perfil" />
 
-      <main className="mx-auto max-w-2xl space-y-5 px-4 py-8 sm:px-6">
-        {/* Avatar + identity card */}
-        <div className="flex items-center gap-5 rounded-2xl border border-white/[0.06] bg-[#111113] p-6">
-          {loading ? (
-            <div className="h-16 w-16 flex-shrink-0 animate-pulse rounded-full bg-zinc-800" />
-          ) : (
-            <Avatar src={profile?.avatarUrl} alt={profile?.name ?? "?"} size="xl" />
-          )}
-          <div className="min-w-0">
+      <main className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-6">
+        {/* Profile hero */}
+        <section className="mb-8 rounded-[28px] border border-white/[0.06] bg-white/[0.035] p-8">
+          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
             {loading ? (
-              <div className="space-y-2">
-                <div className="h-5 w-40 animate-pulse rounded bg-zinc-800" />
-                <div className="h-3.5 w-28 animate-pulse rounded bg-zinc-800" />
-              </div>
+              <div className="h-24 w-24 rounded-full bg-white/[0.06] animate-pulse" />
             ) : (
-              <>
-                <h2 className="font-display text-[20px] font-bold text-zinc-100">
-                  {profile?.name}
-                </h2>
-                <p className="mt-0.5 text-[13px] text-zinc-500">{profile?.email}</p>
-                <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gold-b bg-gold-subtle px-2.5 py-0.5 text-[11px] font-medium text-gold">
-                    <ShieldCheck size={11} />
-                    {ROLE_LABELS[profile?.role ?? ""] ?? profile?.role}
-                  </span>
-                  {profile?.tenant && (
-                    <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-0.5 text-[11px] text-zinc-500">
-                      Plan {PLAN_LABELS[profile.tenant.plan] ?? profile.tenant.plan}
-                    </span>
-                  )}
+              <Avatar
+                src={profile?.avatarUrl}
+                alt={profile?.name ?? "?"}
+                size="xl"
+              />
+            )}
+
+            <div className="min-w-0 flex-1">
+              {loading ? (
+                <div className="space-y-3">
+                  <div className="h-6 w-64 rounded bg-white/[0.06] animate-pulse" />
+                  <div className="h-4 w-40 rounded bg-white/[0.04] animate-pulse" />
                 </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Edit form */}
-        <div className="rounded-2xl border border-white/[0.06] bg-[#111113] p-6">
-          <h3 className="mb-5 font-display text-[14px] font-semibold text-zinc-200">
-            Información personal
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500">
-                <User size={11} />
-                Nombre completo
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-3 text-[14px] text-zinc-100 outline-none transition placeholder:text-zinc-700 focus:border-gold-b"
-                placeholder="Tu nombre"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500">
-                <Mail size={11} />
-                Email
-              </label>
-              <input
-                type="email"
-                value={profile?.email ?? ""}
-                readOnly
-                className="w-full cursor-not-allowed rounded-xl border border-white/[0.04] bg-zinc-900/40 px-4 py-3 text-[14px] text-zinc-600 outline-none"
-              />
-              <p className="mt-1 text-[11px] text-zinc-700">
-                El email no puede modificarse desde aquí.
-              </p>
-            </div>
-
-            <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500">
-                <Phone size={11} />
-                WhatsApp / Teléfono
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-3 text-[14px] text-zinc-100 outline-none transition placeholder:text-zinc-700 focus:border-gold-b"
-                placeholder="+57 300 000 0000"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <p className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-[13px] text-red-300">
-              {error}
-            </p>
-          )}
-
-          <div className="mt-6 flex items-center justify-between gap-4">
-            {joinedDate && (
-              <p className="text-[12px] text-zinc-600">Miembro desde {joinedDate}</p>
-            )}
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!dirty || saving}
-              className="ml-auto flex items-center gap-2 rounded-xl border border-gold-b bg-gold-subtle px-5 py-2.5 text-[13px] font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.16)] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {saved ? (
-                <>
-                  <Check size={14} />
-                  Guardado
-                </>
-              ) : saving ? (
-                "Guardando..."
               ) : (
-                "Guardar cambios"
-              )}
-            </button>
-          </div>
-        </div>
+                <>
+                  <h2 className="text-[26px] font-semibold tracking-[-0.02em] text-zinc-100">
+                    {profile?.name}
+                  </h2>
+                  <p className="mt-1 text-[14px] text-zinc-400">
+                    {profile?.email}
+                  </p>
 
-        {/* Tenant info */}
-        {profile?.tenant && (
-          <div className="rounded-2xl border border-white/[0.06] bg-[#111113] p-6">
-            <h3 className="mb-4 font-display text-[14px] font-semibold text-zinc-200">Tu barbería</h3>
-            <div className="space-y-3">
-              {[
-                { label: "Nombre", value: profile.tenant.name },
-                { label: "Slug / URL", value: profile.tenant.slug },
-                {
-                  label: "Plan activo",
-                  value: PLAN_LABELS[profile.tenant.plan] ?? profile.tenant.plan,
-                },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between">
-                  <span className="text-[12.5px] text-zinc-500">{label}</span>
-                  <span className="text-[13px] font-medium text-zinc-300">{value}</span>
-                </div>
-              ))}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[12px] font-medium text-emerald-300">
+                      <ShieldCheck size={14} />
+                      {ROLE_LABELS[profile?.role ?? ""] ?? profile?.role}
+                    </span>
+
+                    {profile?.tenant && (
+                      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[12px] text-zinc-400">
+                        Plan{" "}
+                        {PLAN_LABELS[profile.tenant.plan] ??
+                          profile.tenant.plan}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        )}
+        </section>
+
+        {/* Content grid */}
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          {/* Form */}
+          <div className="rounded-[26px] border border-white/[0.06] bg-white/[0.035] p-6 sm:p-8">
+            <h3 className="mb-6 text-[16px] font-semibold text-zinc-200">
+              Información personal
+            </h3>
+
+            <div className="space-y-5">
+              <div>
+                <label className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                  <User size={14} /> Nombre completo
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-xl border border-white/[0.08] bg-black/40 px-4 py-3.5 text-[15px] text-zinc-100 outline-none transition focus:border-emerald-400"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                  <Mail size={14} /> Email
+                </label>
+                <input
+                  readOnly
+                  value={profile?.email ?? ""}
+                  className="w-full cursor-not-allowed rounded-xl border border-white/[0.06] bg-black/30 px-4 py-3.5 text-[15px] text-zinc-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                  <Phone size={14} /> Teléfono / WhatsApp
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full rounded-xl border border-white/[0.08] bg-black/40 px-4 py-3.5 text-[15px] text-zinc-100 outline-none transition focus:border-emerald-400"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <p className="mt-5 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[14px] text-red-300">
+                {error}
+              </p>
+            )}
+
+            <div className="mt-8 flex items-center justify-between">
+              {joinedDate && (
+                <span className="text-[13px] text-zinc-500">
+                  Miembro desde {joinedDate}
+                </span>
+              )}
+
+              <button
+                onClick={handleSave}
+                disabled={!dirty || saving}
+                className="flex items-center gap-2 rounded-xl bg-emerald-400 px-6 py-3 text-[14px] font-semibold text-black transition hover:bg-emerald-300 disabled:opacity-40"
+              >
+                {saved ? (
+                  <>
+                    <Check size={16} /> Guardado
+                  </>
+                ) : saving ? (
+                  "Guardando…"
+                ) : (
+                  "Guardar cambios"
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Tenant */}
+          {profile?.tenant && (
+            <div className="rounded-[26px] border border-white/[0.06] bg-white/[0.035] p-6 sm:p-8">
+              <h3 className="mb-6 text-[16px] font-semibold text-zinc-200">
+                Tu barbería
+              </h3>
+
+              <div className="space-y-4">
+                {[
+                  { label: "Nombre", value: profile.tenant.name },
+                  { label: "Slug / URL", value: profile.tenant.slug },
+                  {
+                    label: "Plan activo",
+                    value:
+                      PLAN_LABELS[profile.tenant.plan] ?? profile.tenant.plan,
+                  },
+                ].map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-black/30 px-4 py-3"
+                  >
+                    <span className="text-[13px] text-zinc-400">{label}</span>
+                    <span className="text-[14px] font-medium text-zinc-200">
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
       </main>
-    </>
+    </div>
   );
 }

@@ -220,6 +220,7 @@ export const formatCOP = (value: number): string =>
     currency: "COP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
+    currencyDisplay: "symbol",
   }).format(value);
 
 export const getInitials = (name: string): string =>

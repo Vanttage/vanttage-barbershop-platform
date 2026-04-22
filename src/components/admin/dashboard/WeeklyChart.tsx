@@ -14,17 +14,23 @@ export default function WeeklyChart() {
 
   const weeklyData = data?.weeklyData ?? [];
 
-  // useMemo: solo recalcula cuando weeklyData o mode cambian
   const maxVal = useMemo(
     () =>
       weeklyData.length
-        ? Math.max(...weeklyData.map((d) => (mode === "citas" ? d.citas : d.ingresos)), 1)
+        ? Math.max(
+            ...weeklyData.map((d) => (mode === "citas" ? d.citas : d.ingresos)),
+            1,
+          )
         : 1,
     [weeklyData, mode],
   );
 
   const totalWeek = useMemo(
-    () => weeklyData.reduce((a, d) => a + (mode === "citas" ? d.citas : d.ingresos), 0),
+    () =>
+      weeklyData.reduce(
+        (a, d) => a + (mode === "citas" ? d.citas : d.ingresos),
+        0,
+      ),
     [weeklyData, mode],
   );
 
@@ -45,22 +51,29 @@ export default function WeeklyChart() {
     mode === "ingresos" ? formatCOP(v) : `${v} citas`;
 
   return (
-    <div className="bg-[#111113] border border-white/[0.04] rounded-xl p-6">
-      <div className="flex justify-between items-start mb-5 flex-wrap gap-3">
+    <section className="rounded-[26px] border border-white/[0.06] bg-white/[0.035] p-4 sm:p-6">
+      {/* Header */}
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h3 className="font-display text-[15px] font-semibold text-zinc-100">
+          <h3 className="text-[15px] font-semibold tracking-[-0.02em] text-zinc-100">
             Resumen semanal
           </h3>
-          <p className="text-[11px] text-zinc-600 mt-0.5">
+          <p className="mt-0.5 text-[11px] text-zinc-500">
             Lunes — Domingo · semana actual
           </p>
         </div>
-        <div className="flex bg-zinc-800/60 border border-white/[0.04] rounded-lg p-0.5 gap-0.5">
+
+        <div className="flex rounded-xl border border-white/[0.08] bg-black/30 p-0.5">
           {(["ingresos", "citas"] as Mode[]).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`px-3 py-1.5 rounded-md text-[11.5px] capitalize transition-all ${mode === m ? "bg-zinc-700 border border-white/[0.08] text-gold-light font-medium" : "text-zinc-500 hover:text-zinc-300"}`}
+              className={[
+                "rounded-lg px-3 py-1.5 text-[11.5px] capitalize transition-all",
+                mode === m
+                  ? "bg-white/[0.08] font-medium text-zinc-100"
+                  : "text-zinc-500 hover:text-zinc-300",
+              ].join(" ")}
             >
               {m}
             </button>
@@ -68,25 +81,27 @@ export default function WeeklyChart() {
         </div>
       </div>
 
-      <div className="flex gap-6 mb-5 pb-5 border-b border-white/[0.04]">
+      {/* Stats */}
+      <div className="mb-5 flex gap-6 border-b border-white/[0.06] pb-5">
         <div>
-          <div className="text-[10px] text-zinc-600 tracking-[0.05em] mb-1">
+          <div className="mb-1 text-[10px] tracking-[0.14em] text-zinc-500">
             TOTAL SEMANA
           </div>
           {loading ? (
-            <div className="h-6 w-28 bg-zinc-800/60 rounded animate-pulse" />
+            <div className="h-6 w-28 rounded bg-white/[0.08] animate-pulse" />
           ) : (
-            <div className="font-display text-[21px] font-semibold text-gold-light">
+            <div className="text-[21px] font-semibold tracking-[-0.02em] text-emerald-300">
               {formatVal(totalWeek)}
             </div>
           )}
         </div>
+
         {bestDay && !loading && (
-          <div className="border-l border-white/[0.04] pl-6">
-            <div className="text-[10px] text-zinc-600 tracking-[0.05em] mb-1">
+          <div className="border-l border-white/[0.06] pl-6">
+            <div className="mb-1 text-[10px] tracking-[0.14em] text-zinc-500">
               MEJOR DÍA
             </div>
-            <div className="text-[15px] font-medium text-zinc-200">
+            <div className="text-[14px] font-medium text-zinc-200">
               {bestDay.day} ·{" "}
               {formatVal(mode === "citas" ? bestDay.citas : bestDay.ingresos)}
             </div>
@@ -94,18 +109,19 @@ export default function WeeklyChart() {
         )}
       </div>
 
-      <div className="flex items-end gap-2 h-36">
+      {/* Chart */}
+      <div className="flex h-40 items-end gap-2">
         {loading
           ? Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end"
+                className="flex flex-1 flex-col items-center justify-end gap-2"
               >
                 <div
-                  className="w-full rounded-t bg-zinc-800/60 animate-pulse"
-                  style={{ height: `${30 + ((i * 17) % 50)}%` }}
+                  className="w-full rounded-md bg-white/[0.08] animate-pulse"
+                  style={{ height: `${30 + ((i * 13) % 50)}%` }}
                 />
-                <div className="h-3 w-6 bg-zinc-800/60 rounded animate-pulse" />
+                <div className="h-3 w-6 rounded bg-white/[0.06] animate-pulse" />
               </div>
             ))
           : weeklyData.map((d, i) => {
@@ -113,30 +129,32 @@ export default function WeeklyChart() {
               const pct = (val / maxVal) * 100;
               const isBest = bestDay?.day === d.day;
               const isHov = hovered === i;
+
               return (
                 <div
                   key={d.day}
-                  className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end cursor-pointer"
                   onMouseEnter={() => setHovered(i)}
                   onMouseLeave={() => setHovered(null)}
+                  className="flex flex-1 cursor-pointer flex-col items-center justify-end gap-2"
                 >
-                  <div
-                    className="w-full flex items-end"
-                    style={{ height: "100%" }}
-                  >
+                  <div className="flex h-full w-full items-end">
                     <div
-                      className={`w-full rounded-t-[3px] border transition-all duration-200 ${
+                      className={[
+                        "w-full rounded-md transition-all duration-200",
                         isBest
-                          ? "bg-gradient-to-b from-gold-light to-[#8B6B2E] border-gold"
+                          ? "bg-gradient-to-b from-emerald-400 to-emerald-600"
                           : isHov
-                            ? "bg-zinc-700 border-white/[0.08]"
-                            : "bg-zinc-800/60 border-white/[0.04]"
-                      }`}
-                      style={{ height: `${Math.max(pct, 4)}%` }}
+                            ? "bg-white/[0.18]"
+                            : "bg-white/[0.10]",
+                      ].join(" ")}
+                      style={{ height: `${Math.max(pct, 6)}%` }}
                     />
                   </div>
                   <span
-                    className={`text-[10.5px] ${isBest ? "text-gold font-medium" : "text-zinc-600"}`}
+                    className={[
+                      "text-[10.5px]",
+                      isBest ? "font-medium text-emerald-300" : "text-zinc-500",
+                    ].join(" ")}
                   >
                     {d.day}
                   </span>
@@ -144,6 +162,7 @@ export default function WeeklyChart() {
               );
             })}
       </div>
-    </div>
+    </section>
   );
 }
+``;
