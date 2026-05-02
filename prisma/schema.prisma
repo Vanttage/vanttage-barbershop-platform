@@ -110,6 +110,8 @@ model Tenant {
   notifications       Notification[]
   passwordResetTokens PasswordResetToken[]
   Schedule            Schedule[]
+  blockedDates        BarberBlockedDate[]
+  reviews             Review[]
 
   @@map("tenants")
 }
@@ -147,6 +149,7 @@ model Barbershop {
   payments         Payment[]
   notifications    Notification[]
   favorites        FavoriteBarber[]
+  reviews          Review[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, active])
@@ -218,12 +221,14 @@ model Barber {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  barbershop   Barbershop       @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
-  user         User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
-  appointments Appointment[]
-  schedules    Schedule[]
-  favorites    FavoriteBarber[]
+  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop    Barbershop          @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  user          User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  appointments  Appointment[]
+  schedules     Schedule[]
+  favorites     FavoriteBarber[]
+  blockedDates  BarberBlockedDate[]
+  reviews       Review[]
 
   @@index([tenantId, barbershopId, active])
   @@map("barbers")
@@ -298,6 +303,7 @@ model Client {
   payments      Payment[]
   favorites     FavoriteBarber[]
   notifications Notification[]
+  reviews       Review[]
 
   @@unique([barbershopId, phone])
   @@index([tenantId, barbershopId, active])
@@ -334,6 +340,7 @@ model Appointment {
   history       AppointmentHistory[]
   payments      Payment[]
   notifications Notification[]
+  review        Review?
 
   @@index([tenantId, barbershopId, startsAt])
   @@index([barberId, startsAt])
@@ -464,6 +471,50 @@ model Schedule {
 
   @@unique([barberId, dayOfWeek])
   @@index([tenantId, barbershopId])
-  @@index([barberId, dayOfWeek, isAvailable]) // Consulta crítica en createAppointment
+  @@index([barberId, dayOfWeek, isAvailable])
   @@map("barber_schedules")
+}
+
+// ─── Ausencias / días bloqueados por barbero ────────────────────────────────
+
+model BarberBlockedDate {
+  id        String   @id @default(uuid())
+  tenantId  String
+  barberId  String
+  date      String   // YYYY-MM-DD
+  reason    String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barber Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberId, date])
+  @@index([tenantId, barberId])
+  @@map("barber_blocked_dates")
+}
+
+// ─── Reseñas de clientes ────────────────────────────────────────────────────
+
+model Review {
+  id            String    @id @default(uuid())
+  tenantId      String
+  barbershopId  String
+  appointmentId String    @unique
+  clientId      String
+  barberId      String
+  rating        Int       // 1–5 estrellas
+  comment       String?
+  token         String    @unique @default(uuid())
+  submittedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop  Barbershop  @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  barber      Barber      @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, barbershopId, createdAt])
+  @@index([barberId, rating])
+  @@map("reviews")
 }

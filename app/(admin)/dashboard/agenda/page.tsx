@@ -268,6 +268,14 @@ function NewApptModal({
   );
 }
 
+const PAYMENT_METHODS = [
+  { value: "cash",      label: "Efectivo" },
+  { value: "nequi",     label: "Nequi" },
+  { value: "daviplata", label: "Daviplata" },
+  { value: "transfer",  label: "Transferencia" },
+  { value: "card",      label: "Tarjeta" },
+] as const;
+
 function ApptDetailModal({
   appt,
   onClose,
@@ -281,6 +289,11 @@ function ApptDetailModal({
   const [cancelReason, setCancelReason] = useState("");
   const [showCancel, setShowCancel] = useState(false);
   const [error, setError] = useState("");
+  // Payment form shown when completing a cita
+  const [showPayment, setShowPayment] = useState(false);
+  const [payMethod, setPayMethod] = useState<typeof PAYMENT_METHODS[number]["value"]>("cash");
+  const [payAmount, setPayAmount] = useState(String(appt.total));
+  const [payRef, setPayRef] = useState("");
 
   const updateStatus = async (status: AppointmentStatus) => {
     setLoading(true);
@@ -288,6 +301,24 @@ function ApptDetailModal({
     const body: Record<string, string> = { status };
     if (status === "cancelled" && cancelReason)
       body.cancelReason = cancelReason;
+
+    // Si completando → registrar pago primero
+    if (status === "completed") {
+      const amount = parseInt(payAmount.replace(/\D/g, ""), 10) || appt.total;
+      const { error: payErr } = await apiCall("/api/payments", "POST", {
+        appointmentId: appt.id,
+        method: payMethod,
+        amount,
+        status: "paid",
+        reference: payRef.trim() || undefined,
+      });
+      if (payErr) {
+        setLoading(false);
+        setError(`Error al registrar pago: ${payErr}`);
+        return;
+      }
+    }
+
     const { error: err } = await apiCall(
       `/api/appointments/${appt.id}`,
       "PATCH",
@@ -478,6 +509,55 @@ function ApptDetailModal({
             </div>
           )}
 
+          {/* Payment form — shown when about to complete */}
+          {showPayment && (
+            <div className="mb-4 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.05] p-4">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+                Registrar cobro
+              </p>
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                {PAYMENT_METHODS.map((m) => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setPayMethod(m.value)}
+                    className={[
+                      "rounded-xl border px-3 py-2 text-[12.5px] font-medium transition",
+                      payMethod === m.value
+                        ? "border-emerald-400/40 bg-emerald-400/20 text-emerald-300"
+                        : "border-white/[0.06] text-zinc-500 hover:border-white/[0.12] hover:text-zinc-300",
+                    ].join(" ")}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <div className="mb-2">
+                <label className="mb-1 block text-[10px] uppercase tracking-wider text-zinc-500">
+                  Monto cobrado
+                </label>
+                <input
+                  type="text"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                  className="w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-2 text-sm text-zinc-100 outline-none focus:border-emerald-400/40"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] uppercase tracking-wider text-zinc-500">
+                  Referencia (opcional)
+                </label>
+                <input
+                  type="text"
+                  value={payRef}
+                  onChange={(e) => setPayRef(e.target.value)}
+                  placeholder="Nro de transacción, etc."
+                  className="w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-2 text-sm text-zinc-100 outline-none focus:border-emerald-400/40 placeholder:text-zinc-600"
+                />
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300">
               <AlertTriangle size={14} /> {error}
@@ -489,6 +569,7 @@ function ApptDetailModal({
             <div className="flex flex-wrap gap-2">
               {nextActions.map((action) => {
                 const isCancelAction = action.status === "cancelled";
+                const isCompleteAction = action.status === "completed";
                 return (
                   <button
                     key={action.status}
@@ -499,11 +580,15 @@ function ApptDetailModal({
                         setShowCancel(true);
                         return;
                       }
+                      if (isCompleteAction && !showPayment) {
+                        setShowPayment(true);
+                        return;
+                      }
                       updateStatus(action.status);
                     }}
                     className={`flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium transition disabled:opacity-40 ${action.className}`}
                   >
-                    {loading ? "..." : action.label}
+                    {loading ? "..." : isCompleteAction && showPayment ? "Confirmar cobro y completar" : action.label}
                   </button>
                 );
               })}

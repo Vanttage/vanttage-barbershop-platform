@@ -110,6 +110,7 @@ export function buildConfirmationMessage(params: {
   startsAt: Date | string;
   tenantName: string;
   address?: string;
+  appointmentUrl?: string;
 }): string {
   const d = new Date(params.startsAt);
   const fecha = new Intl.DateTimeFormat("es-CO", {
@@ -130,8 +131,9 @@ export function buildConfirmationMessage(params: {
     `👤 *Barbero:* ${params.barberName}\n` +
     `📅 *Fecha:* ${fecha}\n` +
     `🕐 *Hora:* ${hora}\n` +
-    `📍 *Lugar:* ${params.tenantName}${params.address ? ` · ${params.address}` : ""}\n\n` +
-    `_¿Necesitas cancelar? Responde CANCELAR a este mensaje._`
+    `📍 *Lugar:* ${params.tenantName}${params.address ? ` · ${params.address}` : ""}` +
+    (params.appointmentUrl ? `\n\n🔗 *Ver o gestionar tu cita:*\n${params.appointmentUrl}` : "") +
+    `\n\n_¿Necesitas cancelar o reagendar? Usa el enlace de arriba._`
   );
 }
 
@@ -182,13 +184,48 @@ export function buildReminder1hMessage(params: {
 export function buildReviewRequestMessage(params: {
   clientName: string;
   tenantName: string;
-  googlePlaceId: string;
+  reviewToken: string;
+  baseUrl?: string;
 }): string {
-  const reviewUrl = `https://search.google.com/local/writereview?placeid=${params.googlePlaceId}`;
+  const base = params.baseUrl ?? process.env.NEXTAUTH_URL ?? "https://vanttage.app";
+  const reviewUrl = `${base}/resena/${params.reviewToken}`;
   return (
     `⭐ *¡Gracias por visitarnos, ${params.clientName}!*\n\n` +
-    `¿Cómo te fue en *${params.tenantName}*? Tu opinión nos ayuda mucho 🙏\n\n` +
-    `Déjanos una reseña aquí 👇\n${reviewUrl}`
+    `¿Cómo estuvo tu experiencia en *${params.tenantName}*? Tu opinión nos ayuda mucho 🙏\n\n` +
+    `Déjanos tu calificación aquí 👇\n${reviewUrl}\n\n` +
+    `_Solo tarda 30 segundos. ¡Gracias!_`
+  );
+}
+
+export function buildNewBookingAdminMessage(params: {
+  clientName: string;
+  clientPhone: string;
+  barberName: string;
+  serviceName: string;
+  startsAt: Date | string;
+  tenantName: string;
+  appointmentUrl?: string;
+}): string {
+  const d = new Date(params.startsAt);
+  const fecha = new Intl.DateTimeFormat("es-CO", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(d);
+  const hora = new Intl.DateTimeFormat("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+
+  return (
+    `📅 *Nueva reserva — ${params.tenantName}*\n\n` +
+    `👤 *Cliente:* ${params.clientName}\n` +
+    `📱 *Teléfono:* ${normalizePhone(params.clientPhone)}\n` +
+    `💈 *Servicio:* ${params.serviceName}\n` +
+    `✂️ *Barbero:* ${params.barberName}\n` +
+    `🗓 *Fecha:* ${fecha} · ${hora}` +
+    (params.appointmentUrl ? `\n\n🔗 ${params.appointmentUrl}` : "")
   );
 }
 

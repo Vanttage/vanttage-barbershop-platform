@@ -146,18 +146,34 @@ export async function runReminders(): Promise<{
       tenant: { autoReviewRequest: true },
     },
     include: {
-      tenant: { select: { id: true, name: true, googlePlaceId: true } },
-      client: { select: { name: true, phone: true } },
+      tenant:    { select: { id: true, name: true, slug: true } },
+      barbershop: { select: { id: true } },
+      barber:    { select: { id: true } },
+      client:    { select: { id: true, name: true, phone: true } },
     },
   });
 
   for (const appt of apptsReview) {
-    if (!appt.client.phone || !appt.tenant.googlePlaceId) continue;
+    if (!appt.client.phone) continue;
+
+    // Crear o reutilizar el registro de reseña con token único
+    const reviewRecord = await prisma.review.upsert({
+      where: { appointmentId: appt.id },
+      update: {},
+      create: {
+        tenantId:     appt.tenantId,
+        barbershopId: appt.barbershopId,
+        appointmentId: appt.id,
+        clientId:     appt.clientId,
+        barberId:     appt.barberId,
+        rating:       0, // 0 = no enviada aún
+      },
+    });
 
     const text = buildReviewRequestMessage({
-      clientName:    appt.client.name,
-      tenantName:    appt.tenant.name,
-      googlePlaceId: appt.tenant.googlePlaceId,
+      clientName:  appt.client.name,
+      tenantName:  appt.tenant.name,
+      reviewToken: reviewRecord.token,
     });
 
     const result = await sendWhatsAppText({ to: appt.client.phone, text });

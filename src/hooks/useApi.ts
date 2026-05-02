@@ -119,7 +119,7 @@ export function useApiList<T>(url: string): {
 
 export async function apiCall<T>(
   url: string,
-  method: "POST" | "PATCH" | "DELETE" = "POST",
+  method: "POST" | "PATCH" | "DELETE" | "PUT" = "POST",
   body?: unknown,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<ApiCallResult<T>> {

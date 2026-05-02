@@ -100,9 +100,9 @@ export async function GET(req: NextRequest) {
       break;
     case "review":
       text = buildReviewRequestMessage({
-        clientName:    "Carlos Test",
-        tenantName:    "Barbería VANTTAGE",
-        googlePlaceId: "ChIJN1t_tDeuEmsRUsoyG83frY4",
+        clientName:  "Carlos Test",
+        tenantName:  "Barbería VANTTAGE",
+        reviewToken: "test-token-preview",
       });
       break;
     case "reactivation":

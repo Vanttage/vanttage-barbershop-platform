@@ -1,6 +1,7 @@
 import { prisma } from "@/src/lib/prisma";
 import {
   buildConfirmationMessage,
+  buildNewBookingAdminMessage,
   normalizePhone,
   sendWhatsAppText,
   isTwilioConfigured,
@@ -91,6 +92,7 @@ export async function createAppointment(
         id: true,
         name: true,
         address: true,
+        phoneWa: true,
         autoConfirmacion: true,
       },
     }),
@@ -100,7 +102,7 @@ export async function createAppointment(
         tenantId: context.tenantId,
         active: true,
       },
-      select: { id: true, address: true, active: true },
+      select: { id: true, address: true, whatsapp: true, active: true },
     }),
     prisma.service.findFirst({
       where: {
@@ -134,19 +136,36 @@ export async function createAppointment(
     starts.getMinutes(),
   ).padStart(2, "0")}`;
 
-  const schedule = await prisma.schedule.findFirst({
-    where: {
-      tenantId: context.tenantId,
-      barbershopId: context.barbershopId,
-      barberId: barber.id,
-      dayOfWeek,
-      isAvailable: true,
-    },
-    select: { startTime: true, endTime: true },
-  });
+  // Fecha como YYYY-MM-DD en hora Colombia
+  const coDate = new Date(starts.getTime() - CO_OFFSET_MS);
+  const dateStr = coDate.toISOString().slice(0, 10);
+
+  const [schedule, blockedDate] = await Promise.all([
+    prisma.schedule.findFirst({
+      where: {
+        tenantId: context.tenantId,
+        barbershopId: context.barbershopId,
+        barberId: barber.id,
+        dayOfWeek,
+        isAvailable: true,
+      },
+      select: { startTime: true, endTime: true },
+    }),
+    prisma.barberBlockedDate.findFirst({
+      where: { tenantId: context.tenantId, barberId: barber.id, date: dateStr },
+      select: { id: true, reason: true },
+    }),
+  ]);
 
   if (!schedule) {
     throw new Error("El barbero no atiende en ese dia");
+  }
+
+  if (blockedDate) {
+    const msg = blockedDate.reason
+      ? `El barbero no está disponible ese día: ${blockedDate.reason}`
+      : "El barbero no está disponible ese día";
+    throw new Error(msg);
   }
 
   if (hourMinute < schedule.startTime || hourMinute >= schedule.endTime) {
@@ -240,6 +259,7 @@ export async function createAppointment(
   });
 
   if (tenant.autoConfirmacion && isTwilioConfigured() && appointment.client.phone) {
+    const baseUrl = process.env.NEXTAUTH_URL ?? "https://vanttage.app";
     const message = buildConfirmationMessage({
       clientName: appointment.client.name,
       barberName: appointment.barber.name,
@@ -247,6 +267,7 @@ export async function createAppointment(
       startsAt: appointment.startsAt,
       tenantName: context.barbershopName,
       address: barbershop.address ?? tenant.address ?? undefined,
+      appointmentUrl: `${baseUrl}/mi-cita/${appointment.id}`,
     });
 
     const waResult = await sendWhatsAppText({
@@ -277,6 +298,25 @@ export async function createAppointment(
         data: { confirmationSentAt: new Date() },
       });
     }
+  }
+
+  // ── Notificar al dueño / barbershop ──────────────────────────────────────
+  const adminPhone = barbershop.whatsapp ?? tenant.phoneWa ?? null;
+  if (adminPhone && isTwilioConfigured()) {
+    const baseUrl = process.env.NEXTAUTH_URL ?? "https://vanttage.app";
+    const adminMsg = buildNewBookingAdminMessage({
+      clientName:   appointment.client.name,
+      clientPhone:  appointment.client.phone,
+      barberName:   appointment.barber.name,
+      serviceName:  appointment.service.name,
+      startsAt:     appointment.startsAt,
+      tenantName:   context.barbershopName,
+      appointmentUrl: `${baseUrl}/mi-cita/${appointment.id}`,
+    });
+
+    await sendWhatsAppText({ to: adminPhone, text: adminMsg }).catch((err) =>
+      console.error("[WA] Admin notification failed:", err),
+    );
   }
 
   return appointment;

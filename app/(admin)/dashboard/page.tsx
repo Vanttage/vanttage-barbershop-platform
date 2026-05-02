@@ -1,7 +1,7 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import AppointmentsList from "@/src/components/admin/dashboard/AppointmentsList";
+import AppointmentsWithTitle from "@/src/components/admin/dashboard/AppointmentsWithTitle";
 import BarbersPanel from "@/src/components/admin/dashboard/BarbersPanel";
 import Header from "@/src/components/admin/dashboard/Header";
 import StatsCards from "@/src/components/admin/dashboard/StatsCards";
@@ -149,7 +149,7 @@ export default function DashboardPage() {
           </section>
 
           <div className="min-w-0">
-            <AppointmentsList />
+            <AppointmentsWithTitle />
           </div>
         </main>
       </div>

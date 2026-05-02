@@ -8,7 +8,7 @@ import type { DashboardStats } from "@/src/types";
 type Mode = "citas" | "ingresos";
 
 export default function WeeklyChart() {
-  const [mode, setMode] = useState<Mode>("ingresos");
+  const [mode, setMode] = useState<Mode>("citas");
   const [hovered, setHovered] = useState<number | null>(null);
   const { data, loading } = useApi<DashboardStats>("/api/dashboard");
 
@@ -34,18 +34,18 @@ export default function WeeklyChart() {
     [weeklyData, mode],
   );
 
-  const bestDay = useMemo(
-    () =>
-      weeklyData.length
-        ? weeklyData.reduce((b, d) =>
-            (mode === "citas" ? d.citas : d.ingresos) >
-            (mode === "citas" ? b.citas : b.ingresos)
-              ? d
-              : b,
-          )
-        : null,
-    [weeklyData, mode],
-  );
+  const bestDay = useMemo(() => {
+    if (!weeklyData.length) return null;
+    const best = weeklyData.reduce((b, d) =>
+      (mode === "citas" ? d.citas : d.ingresos) >
+      (mode === "citas" ? b.citas : b.ingresos)
+        ? d
+        : b,
+    );
+    // Solo mostrar si el mejor día tiene valor real > 0
+    const bestVal = mode === "citas" ? best.citas : best.ingresos;
+    return bestVal > 0 ? best : null;
+  }, [weeklyData, mode]);
 
   const formatVal = (v: number) =>
     mode === "ingresos" ? formatCOP(v) : `${v} citas`;
@@ -110,7 +110,7 @@ export default function WeeklyChart() {
       </div>
 
       {/* Chart */}
-      <div className="flex h-40 items-end gap-2">
+      <div className="flex h-44 items-end gap-2">
         {loading
           ? Array.from({ length: 7 }).map((_, i) => (
               <div
@@ -135,8 +135,18 @@ export default function WeeklyChart() {
                   key={d.day}
                   onMouseEnter={() => setHovered(i)}
                   onMouseLeave={() => setHovered(null)}
-                  className="flex flex-1 cursor-pointer flex-col items-center justify-end gap-2"
+                  className="group relative flex flex-1 cursor-pointer flex-col items-center justify-end gap-2"
                 >
+                  {/* Tooltip */}
+                  {isHov && val > 0 && (
+                    <div className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-lg border border-white/[0.10] bg-zinc-900/95 px-2.5 py-1.5 shadow-xl">
+                      <p className="text-center text-[11px] font-semibold text-zinc-100">
+                        {formatVal(val)}
+                      </p>
+                      <p className="text-center text-[10px] text-zinc-500">{d.day}</p>
+                    </div>
+                  )}
+
                   <div className="flex h-full w-full items-end">
                     <div
                       className={[
@@ -144,7 +154,7 @@ export default function WeeklyChart() {
                         isBest
                           ? "bg-gradient-to-b from-emerald-400 to-emerald-600"
                           : isHov
-                            ? "bg-white/[0.18]"
+                            ? "bg-white/[0.22]"
                             : "bg-white/[0.10]",
                       ].join(" ")}
                       style={{ height: `${Math.max(pct, 6)}%` }}
@@ -153,7 +163,7 @@ export default function WeeklyChart() {
                   <span
                     className={[
                       "text-[10.5px]",
-                      isBest ? "font-medium text-emerald-300" : "text-zinc-500",
+                      isBest ? "font-medium text-emerald-300" : isHov ? "text-zinc-300" : "text-zinc-500",
                     ].join(" ")}
                   >
                     {d.day}
@@ -165,4 +175,3 @@ export default function WeeklyChart() {
     </section>
   );
 }
-``;
