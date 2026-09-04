@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { GOOGLE_PENDING_PREFIX } from "@/src/lib/googleAuth";
 
 const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? "vanttage.app";
 const RESERVED_SLUGS = new Set(["www", "app", "admin", "api", "static", "cdn"]);
 const BOOKING_PATH = "/reservar";
+// Segundo paso de "Continuar con Google" en /register — completa el
+// registro (nombre de barbería + teléfono) sin pedir contraseña. Requiere
+// una sesión "pendiente" (ver src/lib/auth.ts), no una cuenta ya creada.
+const GOOGLE_COMPLETE_PATH = "/register/completar";
 
 const ADMIN_PATHS = [
   "/dashboard",
@@ -27,11 +32,6 @@ function resolveTenantSlug(host: string, pathname: string): string | null {
   const pathMatch = PATH_SLUG_RE.exec(pathname);
   if (pathMatch && !RESERVED_SLUGS.has(pathMatch[1])) {
     return pathMatch[1];
-  }
-
-  // 3. Dev env fallback for subdomain-less requests
-  if (host.includes("localhost") || host.includes("127.0.0.1")) {
-    return process.env.VANTTAGE_DEV_TENANT ?? null;
   }
 
   return null;
@@ -58,9 +58,21 @@ export async function middleware(request: NextRequest) {
 
   // Dashboard / API routes accessed from app.vanttagetech.com have no subdomain
   // tenant. Fall back to the tenantSlug stored in the JWT so that getTenantContext()
-  // can resolve the barbershop for the logged-in owner.
+  // can resolve the barbershop for the logged-in owner. This must win over the
+  // localhost dev-tenant fallback below — otherwise every logged-in user on
+  // localhost gets routed to VANTTAGE_DEV_TENANT instead of their own tenant.
   if (!tenantSlug && token?.tenantSlug) {
     tenantSlug = token.tenantSlug;
+  }
+
+  // Dev env fallback: only for anonymous/subdomain-less requests on localhost
+  // (e.g. testing the public booking page without a subdomain). Never overrides
+  // a real logged-in user's tenant, resolved above.
+  if (
+    !tenantSlug &&
+    (host.includes("localhost") || host.includes("127.0.0.1"))
+  ) {
+    tenantSlug = process.env.VANTTAGE_DEV_TENANT ?? null;
   }
 
   const headers = new Headers(request.headers);
@@ -69,10 +81,37 @@ export async function middleware(request: NextRequest) {
     headers.set("x-tenant-slug", tenantSlug);
   }
 
-  const isAuthPath = AUTH_PATHS.some((path) => pathname.startsWith(path));
+  const isPendingGoogleSignup =
+    typeof token?.id === "string" && token.id.startsWith(GOOGLE_PENDING_PREFIX);
+  // /register/completar vive bajo /register — no debe tratarse como "ya
+  // tienes sesión, sal de la pantalla de auth" (ver bloque isAuthPath abajo).
+  const isAuthPath =
+    pathname !== GOOGLE_COMPLETE_PATH &&
+    AUTH_PATHS.some((path) => pathname.startsWith(path));
 
   if (tenantSlug && pathname === "/") {
     return NextResponse.redirect(new URL(BOOKING_PATH, request.url));
+  }
+
+  // ── /register/completar → solo con sesión "pendiente" de Google ────────
+  if (pathname === GOOGLE_COMPLETE_PATH) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/register", request.url));
+    }
+    if (!isPendingGoogleSignup) {
+      // Ya tiene cuenta (o nunca pasó por Google) — no debe volver aquí.
+      const dest =
+        token.role === "superadmin"
+          ? "/superadmin"
+          : token.role === "owner"
+            ? "/dashboard"
+            : tenantSlug
+              ? BOOKING_PATH
+              : "/";
+      return NextResponse.redirect(new URL(dest, request.url));
+    }
+    // Sesión pendiente real → dejar pasar sin más chequeos de rol/tenant.
+    return NextResponse.next({ request: { headers } });
   }
 
   // ── /superadmin → solo role superadmin ─────────────────────────────────
@@ -81,6 +120,9 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+    if (isPendingGoogleSignup) {
+      return NextResponse.redirect(new URL(GOOGLE_COMPLETE_PATH, request.url));
     }
     if (token.role !== "superadmin") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
@@ -93,6 +135,9 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+    if (isPendingGoogleSignup) {
+      return NextResponse.redirect(new URL(GOOGLE_COMPLETE_PATH, request.url));
     }
     if (token.role === "superadmin") {
       return NextResponse.redirect(new URL("/superadmin", request.url));
@@ -110,6 +155,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthPath && token) {
+    if (isPendingGoogleSignup) {
+      return NextResponse.redirect(new URL(GOOGLE_COMPLETE_PATH, request.url));
+    }
     const roleDestinations: Record<string, string> = {
       superadmin: "/superadmin",
       owner: "/dashboard",

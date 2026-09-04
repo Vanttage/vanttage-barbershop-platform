@@ -166,8 +166,7 @@ export default function StatsCards() {
       <StatCard
         label="Tasa de asistencia"
         value={data ? `${data.tasaAsistencia}%` : "0%"}
-        delta={data ? data.tasaAsistencia - 80 : undefined}
-        deltaLabel="vs. promedio"
+        deltaLabel="citas completadas hoy vs. total de hoy"
         icon={<Activity size={16} />}
         loading={loading}
       />

@@ -7,6 +7,7 @@ import type {
   AppointmentWithRelations,
   Barber,
   PublicBarbershop,
+  Schedule,
   Service,
 } from "@/src/types";
 
@@ -18,24 +19,26 @@ interface BookingPageProps {
   tenantSlug?: string;
 }
 
-const HOURS = [
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "13:00",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-  "17:00",
-  "17:30",
-];
+/** GET /api/barbers ya incluye `schedules` en la respuesta — el tipo base
+ *  de Barber (reexportado de Prisma) no lo declara porque es una relación,
+ *  así que se extiende aquí para poder tipar el uso real. */
+type BarberWithSchedule = Barber & { schedules?: Schedule[] };
+
+interface AvailabilityResponse {
+  slots: string[];
+  /** Solo relevante para "sin preferencia": qué barbero(s) están libres en
+   *  cada horario, para poder asignar a alguien realmente disponible en
+   *  vez de siempre el primero de la lista. */
+  slotBarbers: Record<string, string[]>;
+}
+
+function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 const NEXT_DAYS = Array.from({ length: 14 }, (_, i) => {
   const d = new Date();
   d.setDate(d.getDate() + i + 1);
@@ -111,13 +114,41 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
   const { data: services, loading: loadingSvcs } =
     useApiList<Service>(`/api/services${qs}`);
   const { data: barbers, loading: loadingBars } =
-    useApiList<Barber>(`/api/barbers${qs}`);
+    useApiList<BarberWithSchedule>(`/api/barbers${qs}`);
   const { data: barbershop } = useApi<PublicBarbershop>(
     `/api/public/barbershop${qs}`,
   );
 
   const svc = services.find((s) => s.id === selectedSvc);
   const barber = barbers.find((b) => b.id === selectedBarb);
+
+  // Disponibilidad real (horario del barbero + citas existentes) para la
+  // fecha elegida — reemplaza la lista de horas fija de antes, que no
+  // tenía ninguna relación con el horario configurado en Barberos.
+  const availabilityUrl =
+    selectedDate && selectedSvc && selectedBarb
+      ? `/api/public/availability?date=${formatLocalDate(selectedDate)}&serviceId=${selectedSvc}&barberId=${selectedBarb}${
+          tenantSlug ? `&tenantSlug=${encodeURIComponent(tenantSlug)}` : ""
+        }`
+      : "";
+  const { data: availability, loading: loadingSlots } =
+    useApi<AvailabilityResponse>(availabilityUrl);
+  const slots = availability?.slots ?? [];
+  const slotBarbers = availability?.slotBarbers ?? {};
+
+  /** ¿Trabaja este barbero (o alguno, si es "sin preferencia") ese día de
+   *  la semana? Chequeo liviano solo con el horario — no mira citas
+   *  existentes, eso ya lo resuelve /api/public/availability por fecha. */
+  const isDayAvailable = (d: Date) => {
+    const dow = d.getDay();
+    const worksThatDay = (b: BarberWithSchedule) =>
+      b.schedules?.some((s) => s.dayOfWeek === dow && s.isAvailable) ?? false;
+    if (selectedBarb && selectedBarb !== "any") {
+      const b = barbers.find((x) => x.id === selectedBarb);
+      return b ? worksThatDay(b) : true; // aún cargando — no bloquear
+    }
+    return barbers.length === 0 || barbers.some(worksThatDay);
+  };
 
   const reset = () => {
     setStep("servicio");
@@ -142,9 +173,12 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
     const startsAt = new Date(selectedDate);
     startsAt.setHours(h, m, 0, 0);
 
-    const barberId = selectedBarb === "any" ? barbers[0]?.id : selectedBarb;
+    // "Sin preferencia": asignar a un barbero que realmente esté libre en
+    // el horario exacto elegido (no siempre el primero de la lista).
+    const barberId =
+      selectedBarb === "any" ? slotBarbers[selectedTime]?.[0] : selectedBarb;
     if (!barberId) {
-      setError("No hay barberos disponibles. Contacta la barbería directamente.");
+      setError("Ese horario ya no está disponible. Elige otro.");
       setLoading(false);
       return;
     }
@@ -231,7 +265,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
           </div>
           <button
             onClick={reset}
-            className="w-full py-3.5 rounded-xl bg-gold-subtle border border-gold-b text-[14px] font-medium text-gold-light hover:bg-[rgba(201,168,76,0.18)] transition-all"
+            className="w-full py-3.5 rounded-xl bg-gold-subtle border border-gold-border text-[14px] font-medium text-gold-light hover:bg-[rgba(201,168,76,0.18)] transition-all"
           >
             Reservar otra cita
           </button>
@@ -252,7 +286,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
         <div className="max-w-lg mx-auto px-5 py-4 flex items-center justify-between">
           <div>
             <div className="font-display text-[18px] font-semibold text-gold tracking-wider">
-              {barbershop?.barbershopName ?? "VANTTAGE"}
+              {barbershop?.barbershopName ?? "NAVA"}
             </div>
             <div className="mt-0.5 text-[10.5px] text-zinc-600">
               {[barbershop?.address, barbershop?.city]
@@ -294,10 +328,10 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                         setSelectedSvc(s.id);
                         setStep("barbero");
                       }}
-                      className="w-full flex items-center justify-between p-4 rounded-xl bg-[#111113] border border-white/[0.05] hover:border-gold-b hover:bg-[rgba(201,168,76,0.04)] transition-all hover:-translate-y-0.5 text-left group"
+                      className="w-full flex items-center justify-between p-4 rounded-xl bg-[#111113] border border-white/[0.05] hover:border-gold-border hover:bg-[rgba(201,168,76,0.04)] transition-all hover:-translate-y-0.5 text-left group"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-zinc-800/80 border border-white/[0.06] flex flex-col items-center justify-center group-hover:border-gold-b transition-colors">
+                        <div className="w-12 h-12 rounded-xl bg-zinc-800/80 border border-white/[0.06] flex flex-col items-center justify-center group-hover:border-gold-border transition-colors">
                           <span className="text-[14px] font-semibold text-zinc-200 leading-none">
                             {s.durationMin}
                           </span>
@@ -350,7 +384,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                   setSelectedBarb("any");
                   setStep("fecha");
                 }}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#111113] border border-white/[0.05] hover:border-gold-b hover:bg-[rgba(201,168,76,0.04)] transition-all hover:-translate-y-0.5 text-left"
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#111113] border border-white/[0.05] hover:border-gold-border hover:bg-[rgba(201,168,76,0.04)] transition-all hover:-translate-y-0.5 text-left"
               >
                 <div className="w-12 h-12 rounded-full bg-zinc-800 border border-white/[0.08] flex items-center justify-center text-zinc-400 text-[18px]">
                   ✦
@@ -379,9 +413,9 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                       setSelectedBarb(b.id);
                       setStep("fecha");
                     }}
-                    className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#111113] border border-white/[0.05] hover:border-gold-b hover:bg-[rgba(201,168,76,0.04)] transition-all hover:-translate-y-0.5 text-left"
+                    className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#111113] border border-white/[0.05] hover:border-gold-border hover:bg-[rgba(201,168,76,0.04)] transition-all hover:-translate-y-0.5 text-left"
                   >
-                    <div className="w-12 h-12 rounded-full bg-[#8B6B2E] border-2 border-gold-b flex items-center justify-center text-[14px] font-bold text-gold-light">
+                    <div className="w-12 h-12 rounded-full bg-[#8B6B2E] border-2 border-gold-border flex items-center justify-center text-[14px] font-bold text-gold-light">
                       {b.name
                         .split(" ")
                         .map((w: string) => w[0])
@@ -420,17 +454,17 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
             </p>
             <div className="flex gap-2 overflow-x-auto pb-3 mb-6 no-scrollbar">
               {NEXT_DAYS.slice(0, 12).map((d) => {
-                const isSun = d.getDay() === 0;
+                const dayOk = isDayAvailable(d);
                 const isSel = selectedDate?.toDateString() === d.toDateString();
                 return (
                   <button
                     key={d.toISOString()}
-                    disabled={isSun}
+                    disabled={!dayOk}
                     onClick={() => {
                       setSelectedDate(d);
                       setSelectedTime(null);
                     }}
-                    className={`flex-shrink-0 w-14 py-3 rounded-xl border text-center transition-all ${isSel ? "bg-gold-subtle border-gold text-gold-light" : !isSun ? "bg-[#111113] border-white/[0.05] hover:border-gold-b" : "opacity-25 bg-zinc-900 border-white/[0.03] cursor-not-allowed"}`}
+                    className={`flex-shrink-0 w-14 py-3 rounded-xl border text-center transition-all ${isSel ? "bg-gold-subtle border-gold text-gold-light" : dayOk ? "bg-[#111113] border-white/[0.05] hover:border-gold-border" : "opacity-25 bg-zinc-900 border-white/[0.03] cursor-not-allowed"}`}
                   >
                     <div
                       className={`text-[10px] font-medium ${isSel ? "text-gold" : "text-zinc-600"}`}
@@ -459,23 +493,38 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                 <p className="text-[10.5px] text-zinc-600 uppercase tracking-[0.08em] font-medium mb-3">
                   Hora disponible
                 </p>
-                <div className="grid grid-cols-4 gap-2 mb-6">
-                  {HOURS.map((h) => (
-                    <button
-                      key={h}
-                      onClick={() => setSelectedTime(h)}
-                      className={`py-2.5 rounded-lg border text-[13px] font-medium transition-all ${selectedTime === h ? "bg-gold-subtle border-gold text-gold-light" : "bg-[#111113] border-white/[0.05] text-zinc-500 hover:border-gold-b hover:text-zinc-200"}`}
-                    >
-                      {h}
-                    </button>
-                  ))}
-                </div>
+                {loadingSlots ? (
+                  <div className="grid grid-cols-4 gap-2 mb-6">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-[42px] rounded-lg border border-white/[0.05] bg-white/[0.03] animate-pulse"
+                      />
+                    ))}
+                  </div>
+                ) : slots.length === 0 ? (
+                  <div className="mb-6 rounded-lg border border-white/[0.05] bg-[#111113] px-4 py-6 text-center text-[12.5px] text-zinc-500">
+                    No hay horarios disponibles para este día. Elige otra fecha.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-2 mb-6">
+                    {slots.map((h) => (
+                      <button
+                        key={h}
+                        onClick={() => setSelectedTime(h)}
+                        className={`py-2.5 rounded-lg border text-[13px] font-medium transition-all ${selectedTime === h ? "bg-gold-subtle border-gold text-gold-light" : "bg-[#111113] border-white/[0.05] text-zinc-500 hover:border-gold-border hover:text-zinc-200"}`}
+                      >
+                        {h}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </>
             )}
             <button
               onClick={() => setStep("datos")}
               disabled={!selectedDate || !selectedTime}
-              className="w-full py-4 rounded-xl font-medium text-[14px] bg-gold-subtle border border-gold-b text-gold-light hover:bg-[rgba(201,168,76,0.18)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="w-full py-4 rounded-xl font-medium text-[14px] bg-gold-subtle border border-gold-border text-gold-light hover:bg-[rgba(201,168,76,0.18)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               Continuar →
             </button>
@@ -562,7 +611,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                     onChange={(e) =>
                       setForm((p) => ({ ...p, [key]: e.target.value }))
                     }
-                    className="w-full bg-zinc-800/50 border border-white/[0.06] rounded-xl px-4 py-3 text-[14px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-gold-b transition-colors"
+                    className="w-full bg-zinc-800/50 border border-white/[0.06] rounded-xl px-4 py-3 text-[14px] text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-gold-border transition-colors"
                   />
                 </div>
               ))}
@@ -588,7 +637,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
             <button
               onClick={handleConfirm}
               disabled={!form.name || !form.phone || loading}
-              className="w-full py-4 rounded-xl font-medium text-[15px] bg-gold-subtle border border-gold-b text-gold-light hover:bg-[rgba(201,168,76,0.18)] disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-xl font-medium text-[15px] bg-gold-subtle border border-gold-border text-gold-light hover:bg-[rgba(201,168,76,0.18)] disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -626,7 +675,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
         <div className="text-[11px] text-zinc-700">
           Powered by{" "}
           <span className="text-gold/60 font-medium tracking-wider">
-            VANTTAGE
+            Vanttage Tech
           </span>
         </div>
       </footer>

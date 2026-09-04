@@ -20,7 +20,7 @@ import Header from "@/src/components/admin/dashboard/Header";
 
 const PLAN_CONFIG: Record<Plan, { label: string; color: string; bg: string; border: string; price: number }> = {
   basico: { label: "Basico", color: "text-zinc-400", bg: "bg-zinc-800/60", border: "border-white/[0.08]", price: 80000 },
-  pro: { label: "Pro", color: "text-gold", bg: "bg-gold-subtle", border: "border-gold-b", price: 120000 },
+  pro: { label: "Pro", color: "text-gold", bg: "bg-gold-subtle", border: "border-gold-border", price: 120000 },
   premium: { label: "Premium", color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/25", price: 180000 },
 };
 
@@ -164,11 +164,11 @@ export default function SuperAdminPage() {
               key={label}
               className={`flex items-center gap-4 rounded-xl border p-5 ${
                 accent
-                  ? "border-gold-b bg-gradient-to-br from-[rgba(201,168,76,0.12)] to-[rgba(201,168,76,0.03)]"
+                  ? "border-gold-border bg-gradient-to-br from-[rgba(201,168,76,0.12)] to-[rgba(201,168,76,0.03)]"
                   : "border-white/[0.04] bg-[#111113]"
               }`}
             >
-              <div className={`rounded-lg border border-white/[0.05] bg-zinc-800/60 p-2.5 ${accent ? "border-gold-b/40 bg-gold-subtle" : ""}`}>
+              <div className={`rounded-lg border border-white/[0.05] bg-zinc-800/60 p-2.5 ${accent ? "border-gold-border/40 bg-gold-subtle" : ""}`}>
                 <Icon size={16} className={color} />
               </div>
               <div>
@@ -189,7 +189,7 @@ export default function SuperAdminPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar barberia, slug o email..."
-                className="w-72 rounded-lg border border-white/[0.06] bg-zinc-800/60 py-2 pl-8 pr-3 text-[12.5px] text-zinc-200 outline-none transition focus:border-gold-b placeholder:text-zinc-600"
+                className="w-72 rounded-lg border border-white/[0.06] bg-zinc-800/60 py-2 pl-8 pr-3 text-[12.5px] text-zinc-200 outline-none transition focus:border-gold-border placeholder:text-zinc-600"
               />
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -258,7 +258,7 @@ export default function SuperAdminPage() {
                 >
                   {/* Name */}
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-gold-b bg-[#2A2116] text-[10px] font-bold text-gold-light">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-gold-border bg-[#2A2116] text-[10px] font-bold text-gold-light">
                       {t.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">

@@ -17,6 +17,16 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 opacity-[0.03] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:40px_40px]" />
 
         <div className="relative mx-auto max-w-6xl px-6 py-12">
+          {/* BRAND */}
+          <div className="mb-12 text-center">
+            <div className="font-display text-2xl font-bold tracking-[0.16em] bg-[#D4AF37] bg-clip-text text-transparent sm:text-3xl">
+              NAVA
+            </div>
+            <div className="mt-1.5 text-[10px] uppercase tracking-[0.24em] text-zinc-600">
+              by VANTTAGE Tech
+            </div>
+          </div>
+
           {/* HERO CENTER */}
           <div className="mx-auto max-w-3xl text-center">
             <p className="mb-6 text-xs uppercase tracking-[0.2em] text-gold/70">

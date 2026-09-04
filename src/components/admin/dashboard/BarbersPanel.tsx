@@ -8,30 +8,9 @@ type BarberPanelItem = {
   name: string;
   specialty: string | null;
   active: boolean;
-  rating: number;
   appointmentsToday: number;
   favoriteCount: number;
 };
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((value) => (
-        <span
-          key={value}
-          className={
-            value <= Math.round(rating) ? "text-amber-400" : "text-zinc-700"
-          }
-        >
-          ★
-        </span>
-      ))}
-      <span className="ml-1 text-[11px] text-zinc-500">
-        {rating.toFixed(1)}
-      </span>
-    </div>
-  );
-}
 
 export default function BarbersPanel() {
   const { data: barbers, loading } = useApiList<BarberPanelItem>(
@@ -124,11 +103,6 @@ export default function BarbersPanel() {
                       {barber.active ? "Activo" : "Inactivo"}
                     </p>
                   </div>
-                </div>
-
-                {/* Rating */}
-                <div className="mt-4 flex items-center justify-between">
-                  <Stars rating={barber.rating} />
                 </div>
               </div>
             ))}

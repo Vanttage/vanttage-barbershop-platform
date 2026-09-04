@@ -1,9 +1,19 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM    = process.env.RESEND_FROM    ?? "VANTTAGE <noreply@vanttage.app>";
 const BASE_URL = process.env.NEXTAUTH_URL  ?? "http://localhost:3000";
+
+// Instanciar Resend de forma perezosa: si se crea a nivel de módulo, el SDK
+// lanza cuando RESEND_API_KEY no está configurada — y como estas funciones se
+// importan desde rutas API, eso tumba `next build` por completo aunque nadie
+// llegue a enviar un email.
+let resendClient: Resend | null = null;
+
+function getResendClient(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!resendClient) resendClient = new Resend(process.env.RESEND_API_KEY);
+  return resendClient;
+}
 
 // ── Password reset ────────────────────────────────────────────────────────────
 
@@ -17,6 +27,8 @@ export async function sendPasswordResetEmail({
   token: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const resetUrl = `${BASE_URL}/reset-password?token=${token}`;
+  const resend = getResendClient();
+  if (!resend) return { ok: false, error: "RESEND_API_KEY no está configurado" };
 
   try {
     const { error } = await resend.emails.send({
@@ -41,6 +53,9 @@ export async function sendPasswordChangedEmail({
   to: string;
   name: string;
 }): Promise<{ ok: boolean; error?: string }> {
+  const resend = getResendClient();
+  if (!resend) return { ok: false, error: "RESEND_API_KEY no está configurado" };
+
   try {
     const { error } = await resend.emails.send({
       from: FROM,
@@ -74,6 +89,9 @@ export async function sendWeeklyReportEmail({
   totalIngresos: number;
   topClient?: string;
 }): Promise<{ ok: boolean; error?: string }> {
+  const resend = getResendClient();
+  if (!resend) return { ok: false, error: "RESEND_API_KEY no está configurado" };
+
   try {
     const { error } = await resend.emails.send({
       from: FROM,

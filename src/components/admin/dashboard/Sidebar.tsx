@@ -10,6 +10,7 @@ import {
   Scissors,
   Layers,
   CreditCard,
+  Wallet,
   Zap,
   Settings,
   Shield,
@@ -25,6 +26,7 @@ const ownerNavItems = [
   { label: "Barberos", href: "/dashboard/barberos", icon: Scissors },
   { label: "Servicios", href: "/dashboard/servicios", icon: Layers },
   { label: "Pagos", href: "/dashboard/pagos", icon: CreditCard },
+  { label: "Caja", href: "/dashboard/caja", icon: Wallet },
   { label: "Automatizaciones", href: "/dashboard/automatizaciones", icon: Zap },
   { label: "Configuración", href: "/dashboard/configuracion", icon: Settings },
 ];
@@ -70,7 +72,7 @@ export default function Sidebar() {
           {/* LOGO */}
           <img
             src="/logo.svg"
-            alt="Vanttage"
+            alt="NAVA"
             className="h-8 w-8 shrink-0 object-contain"
           />
 
@@ -92,7 +94,7 @@ export default function Sidebar() {
                 letterSpacing: "0.14em",
               }}
             >
-              VANTTAGE
+              NAVA
             </p>
             <p className="mt-0.5 truncate text-[10px] uppercase tracking-[0.18em] text-zinc-500">
               {isSuperadmin

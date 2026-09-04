@@ -18,26 +18,35 @@ export async function GET(_request: NextRequest, { params }: Params) {
   }
 
   const { id } = await params;
-  const client = await prisma.client.findFirst({
-    where: { id, tenantId: ctx.tenantId, barbershopId: ctx.barbershopId },
-    include: {
-      _count: { select: { appointments: true } },
-      appointments: {
-        orderBy: { startsAt: "desc" },
-        take: 5,
-        include: {
-          service: { select: { id: true, name: true, price: true } },
-          barber: { select: { id: true, name: true } },
+  const [client, spent] = await Promise.all([
+    prisma.client.findFirst({
+      where: { id, tenantId: ctx.tenantId, barbershopId: ctx.barbershopId },
+      include: {
+        _count: { select: { appointments: true } },
+        appointments: {
+          where: { status: "completed" },
+          orderBy: { startsAt: "desc" },
+          take: 5,
+          include: {
+            service: { select: { id: true, name: true, price: true } },
+            barber: { select: { id: true, name: true } },
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.appointment.aggregate({
+      where: { clientId: id, status: "completed" },
+      _sum: { total: true },
+    }),
+  ]);
 
   if (!client) {
     return NextResponse.json({ error: "Cliente no encontrado" }, { status: 404 });
   }
 
-  return NextResponse.json({ data: client });
+  return NextResponse.json({
+    data: { ...client, totalSpent: spent._sum.total ?? 0 },
+  });
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {

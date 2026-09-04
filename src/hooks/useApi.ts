@@ -63,6 +63,10 @@ export function useApi<T>(url: string, options?: RequestInit): UseApiState<T> {
       try {
         const res = await fetch(url, {
           ...optionsRef.current,
+          // El dashboard siempre debe ver el estado real tras una mutación
+          // propia (crear/editar/pausar) — nunca servir una respuesta GET
+          // cacheada por el navegador.
+          cache: "no-store",
           signal: controller.signal,
         });
 
@@ -110,6 +114,83 @@ export function useApiList<T>(url: string): {
 } {
   const { data, loading, error, refetch } = useApi<T[]>(url);
   return { data: data ?? [], loading, error, refetch };
+}
+
+// ── useApiPaginated ───────────────────────────────────────────────
+// Como useApiList, pero conserva el objeto `pagination` que la API
+// devuelve junto a `data` ({ total, page, limit, pages }). useApiList
+// lo descarta — por eso las listas paginadas (ej. clientes) nunca
+// mostraban más allá de la primera página.
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export function useApiPaginated<T>(url: string): {
+  data: T[];
+  pagination: PaginationMeta | null;
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+} {
+  const [data, setData] = useState<T[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [trigger, setTrigger] = useState(0);
+
+  const refetch = useCallback(() => setTrigger((t) => t + 1), []);
+
+  useEffect(() => {
+    if (!url) return;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(url, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          setError(json.error ?? `Error ${res.status}`);
+          setData([]);
+          setPagination(null);
+        } else {
+          setData(Array.isArray(json.data) ? json.data : []);
+          setPagination(json.pagination ?? null);
+        }
+      } catch (err) {
+        if ((err as Error).name === "AbortError") {
+          setError("Tiempo de espera agotado");
+        } else {
+          setError("Error de conexión");
+        }
+      } finally {
+        clearTimeout(timeoutId);
+        setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [url, trigger]);
+
+  return { data, pagination, loading, error, refetch };
 }
 
 // ── apiCall ───────────────────────────────────────────────────────

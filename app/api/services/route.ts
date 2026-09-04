@@ -26,10 +26,10 @@ export async function GET(request: NextRequest) {
     orderBy: [{ orderIndex: "asc" }, { createdAt: "asc" }],
   });
 
-  const res = NextResponse.json({ data: services });
-  // El catálogo de servicios cambia raramente — cachear 2 min
-  res.headers.set("Cache-Control", "private, max-age=120, stale-while-revalidate=300");
-  return res;
+  // Sin cache HTTP: el dueño edita/crea servicios y espera ver el cambio de
+  // inmediato en el mismo dashboard. Cachear esta respuesta hacía que el
+  // navegador sirviera la lista vieja tras crear/editar hasta refrescar a mano.
+  return NextResponse.json({ data: services });
 }
 
 export async function POST(request: NextRequest) {

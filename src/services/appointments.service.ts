@@ -1,3 +1,4 @@
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import {
   buildConfirmationMessage,
@@ -6,6 +7,10 @@ import {
   isTwilioConfigured,
 } from "@/src/lib/whatsapp";
 import type { CreateAppointmentDTO, DashboardStats } from "@/src/types";
+
+// Cliente Prisma normal o de una transacción — checkSlotAvailability se usa
+// en ambos contextos (ver comentario en createAppointment).
+type Db = PrismaClient | Prisma.TransactionClient;
 
 // ── Colombia timezone (UTC-5, sin horario de verano) ─────────────────────────
 const CO_OFFSET_MS = 5 * 60 * 60_000; // 5 h en ms
@@ -28,6 +33,52 @@ type SchedulerContext = {
   barbershopName: string;
 };
 
+/**
+ * Verifica que [starts, ends) caiga completo dentro de la jornada del
+ * barbero ese día — no solo que `starts` esté dentro del rango.
+ *
+ * Bug que corrige: antes solo se validaba `starts`, así que con jornada
+ * 08:00–18:00 y un servicio de 45 min, una cita a las 17:45 pasaba la
+ * validación aunque terminara a las 18:30, ya pasada la hora de cierre.
+ */
+export async function checkBarberSchedule(
+  tenantId: string,
+  barbershopId: string,
+  barberId: string,
+  starts: Date,
+  ends: Date,
+  db: Db = prisma,
+): Promise<{ ok: boolean; error?: string }> {
+  const dayOfWeek = starts.getDay();
+  const toHourMinute = (d: Date) =>
+    `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+  const schedule = await db.schedule.findFirst({
+    where: { tenantId, barbershopId, barberId, dayOfWeek, isAvailable: true },
+    select: { startTime: true, endTime: true },
+  });
+
+  if (!schedule) {
+    return { ok: false, error: "El barbero no atiende ese día" };
+  }
+
+  const startHM = toHourMinute(starts);
+  const endHM = toHourMinute(ends);
+
+  if (startHM < schedule.startTime || startHM >= schedule.endTime) {
+    return { ok: false, error: "La hora seleccionada está fuera del horario disponible" };
+  }
+
+  if (endHM > schedule.endTime) {
+    return {
+      ok: false,
+      error: `El servicio terminaría a las ${endHM}, después del cierre (${schedule.endTime})`,
+    };
+  }
+
+  return { ok: true };
+}
+
 export async function checkSlotAvailability(
   tenantId: string,
   barbershopId: string,
@@ -35,8 +86,9 @@ export async function checkSlotAvailability(
   starts: Date,
   ends: Date,
   excludeId?: string,
+  db: Db = prisma,
 ) {
-  const conflict = await prisma.appointment.findFirst({
+  const conflict = await db.appointment.findFirst({
     where: {
       tenantId,
       barbershopId,
@@ -129,40 +181,16 @@ export async function createAppointment(
 
   const starts = new Date(dto.startsAt);
   const ends = new Date(starts.getTime() + service.durationMin * 60_000);
-  const dayOfWeek = starts.getDay();
-  const hourMinute = `${String(starts.getHours()).padStart(2, "0")}:${String(
-    starts.getMinutes(),
-  ).padStart(2, "0")}`;
 
-  const schedule = await prisma.schedule.findFirst({
-    where: {
-      tenantId: context.tenantId,
-      barbershopId: context.barbershopId,
-      barberId: barber.id,
-      dayOfWeek,
-      isAvailable: true,
-    },
-    select: { startTime: true, endTime: true },
-  });
-
-  if (!schedule) {
-    throw new Error("El barbero no atiende en ese dia");
-  }
-
-  if (hourMinute < schedule.startTime || hourMinute >= schedule.endTime) {
-    throw new Error("La hora seleccionada esta fuera del horario disponible");
-  }
-
-  const availability = await checkSlotAvailability(
+  const scheduleCheck = await checkBarberSchedule(
     context.tenantId,
     context.barbershopId,
     barber.id,
     starts,
     ends,
   );
-
-  if (!availability.available) {
-    throw new Error(availability.conflict ?? "Horario ocupado");
+  if (!scheduleCheck.ok) {
+    throw new Error(scheduleCheck.error);
   }
 
   let clientId = dto.clientId;
@@ -196,7 +224,27 @@ export async function createAppointment(
     clientId = client.id;
   }
 
-  const appointment = await prisma.$transaction(async (tx) => {
+  const appointment = await prisma.$transaction(
+    async (tx) => {
+    // Re-chequear disponibilidad DENTRO de la transacción — si el check se
+    // hace antes (como estaba), dos reservas simultáneas para el mismo
+    // horario pueden pasar ambas la validación antes de que cualquiera haga
+    // commit (TOCTOU). Con aislamiento Serializable, Postgres aborta una de
+    // las dos transacciones si detecta ese conflicto de escritura.
+    const availability = await checkSlotAvailability(
+      context.tenantId,
+      context.barbershopId,
+      barber.id,
+      starts,
+      ends,
+      undefined,
+      tx,
+    );
+
+    if (!availability.available) {
+      throw new Error(availability.conflict ?? "Horario ocupado");
+    }
+
     const created = await tx.appointment.create({
       data: {
         tenantId: context.tenantId,
@@ -218,13 +266,10 @@ export async function createAppointment(
       },
     });
 
-    await tx.client.update({
-      where: { id: clientId! },
-      data: {
-        totalVisits: { increment: 1 },
-        lastVisitAt: starts,
-      },
-    });
+    // totalVisits/lastVisitAt NO se actualizan aquí — una cita reservada
+    // (incluso una que luego se cancele) no es una visita todavía. Se
+    // incrementan en PATCH /api/appointments/[id] solo cuando la cita pasa
+    // realmente a "completed", que es cuando el servicio ya ocurrió.
 
     await tx.appointmentHistory.create({
       data: {
@@ -237,7 +282,9 @@ export async function createAppointment(
     });
 
     return created;
-  });
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
 
   if (tenant.autoConfirmacion && isTwilioConfigured() && appointment.client.phone) {
     const message = buildConfirmationMessage({

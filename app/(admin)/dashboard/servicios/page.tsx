@@ -21,12 +21,23 @@ import {
   ToggleRight,
 } from "lucide-react";
 
+// Formatea dígitos crudos ("35000") como miles legibles ("35.000") para que
+// el usuario no se pierda al escribir precios grandes.
+function formatThousands(digits: string): string {
+  if (!digits) return "";
+  return new Intl.NumberFormat("es-CO").format(Number(digits));
+}
+
+function onlyDigits(value: string): string {
+  return value.replace(/\D/g, "").slice(0, 9); // tope razonable, evita overflow
+}
+
 type ServiceRow = Service & {
   category?: { id: string; name: string } | null;
 };
 
 const FIELD_CLASS =
-  "w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-gold-b placeholder:text-zinc-600";
+  "w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-gold-border placeholder:text-zinc-600";
 const LABEL_CLASS =
   "mb-1.5 block text-[10.5px] uppercase tracking-[0.12em] text-zinc-500";
 
@@ -59,6 +70,9 @@ function ServiceModal({
   const set = (key: keyof ServiceFormData) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((p) => ({ ...p, [key]: e.target.value }));
+
+  const setPrice = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((p) => ({ ...p, price: onlyDigits(e.target.value) }));
 
   const handleSubmit = async () => {
     if (!form.name.trim()) { setError("El nombre es obligatorio"); return; }
@@ -117,7 +131,19 @@ function ServiceModal({
           </div>
           <div>
             <label className={LABEL_CLASS}>Precio (COP)</label>
-            <input type="number" min="0" step="1000" value={form.price} onChange={set("price")} className={FIELD_CLASS} />
+            <div className="relative">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
+                $
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formatThousands(form.price)}
+                onChange={setPrice}
+                placeholder="35.000"
+                className={`${FIELD_CLASS} pl-7`}
+              />
+            </div>
           </div>
           <div className="md:col-span-2">
             <label className={LABEL_CLASS}>Descripcion (opcional)</label>
@@ -145,7 +171,7 @@ function ServiceModal({
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="flex-1 rounded-xl border border-gold-b bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)] disabled:opacity-40"
+            className="flex-1 rounded-xl border border-gold-border bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)] disabled:opacity-40"
           >
             {saving ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear servicio"}
           </button>
@@ -283,13 +309,13 @@ export default function ServiciosPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar servicio o categoria..."
-                className="w-72 rounded-lg border border-white/[0.06] bg-zinc-800/60 py-2 pl-8 pr-3 text-[12.5px] text-zinc-200 outline-none transition focus:border-gold-b placeholder:text-zinc-600"
+                className="w-72 rounded-lg border border-white/[0.06] bg-zinc-800/60 py-2 pl-8 pr-3 text-[12.5px] text-zinc-200 outline-none transition focus:border-gold-border placeholder:text-zinc-600"
               />
             </div>
             <button
               type="button"
               onClick={() => setModal("create")}
-              className="flex items-center gap-2 rounded-xl border border-gold-b bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)]"
+              className="flex items-center gap-2 rounded-xl border border-gold-border bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)]"
             >
               <Plus size={14} />
               Nuevo servicio
@@ -388,7 +414,7 @@ export default function ServiciosPage() {
                 <button
                   type="button"
                   onClick={() => setModal("create")}
-                  className="mt-5 mx-auto flex items-center gap-2 rounded-xl border border-gold-b bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)]"
+                  className="mt-5 mx-auto flex items-center gap-2 rounded-xl border border-gold-border bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)]"
                 >
                   <Plus size={14} />
                   Crear primer servicio

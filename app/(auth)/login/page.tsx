@@ -17,10 +17,12 @@ const ROLE_DESTINATIONS: Record<string, string> = {
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const rawCallback = searchParams.get("callbackUrl") ?? "";
+  const oauthError = searchParams.get("error");
 
   const [mounted, setMounted] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPass, setShowPass] = useState(false);
 
@@ -29,7 +31,27 @@ function LoginPageContent() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // El callback signIn() de src/lib/auth.ts redirige aquí con ?error=...
+  // cuando el correo de Google corresponde a una cuenta desactivada (no
+  // cuando simplemente no existe — en ese caso el login con Google te lleva
+  // directo a completar el registro, ver /register/completar).
+  useEffect(() => {
+    if (oauthError === "GoogleNoAccount") {
+      setError(
+        "Esa cuenta está inactiva. Contacta al soporte o inicia sesión con tu contraseña.",
+      );
+    } else if (oauthError) {
+      setError("No pudimos iniciar sesión con Google. Intenta de nuevo.");
+    }
+  }, [oauthError]);
+
   if (!mounted) return null;
+
+  function handleGoogleSignIn() {
+    setGoogleLoading(true);
+    signIn("google", { callbackUrl: "/dashboard" });
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -80,7 +102,10 @@ function LoginPageContent() {
         {/* ── LOGO ── */}
         <div className="mb-12 text-center">
           <div className="font-display text-[38px] sm:text-[44px] font-semibold tracking-[0.12em]  bg-[#D4AF37] bg-clip-text text-transparent">
-            VANTTAGE
+            NAVA
+          </div>
+          <div className="mt-1.5 text-[10px] uppercase tracking-[0.24em] text-zinc-600">
+            by VANTTAGE Tech
           </div>
 
           <div className="mt-3 text-[12px] uppercase tracking-[0.28em] text-zinc-500">
@@ -97,6 +122,56 @@ function LoginPageContent() {
             <p className="mt-2 text-sm text-zinc-500">
               Accede a tu panel de gestión.
             </p>
+          </div>
+
+          {/* GOOGLE */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading}
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.1] bg-white py-3 text-sm font-medium text-zinc-800 transition-all duration-200 hover:bg-zinc-100 active:scale-[0.98] disabled:opacity-60"
+          >
+            {googleLoading ? (
+              <svg
+                className="animate-spin text-zinc-500"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47a5.54 5.54 0 0 1-2.4 3.63v3h3.87c2.26-2.09 3.55-5.17 3.55-8.87Z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.24 0 5.95-1.07 7.94-2.9l-3.87-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.28v3.11A12 12 0 0 0 12 24Z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.27 14.29a7.2 7.2 0 0 1 0-4.58V6.6H1.28a12 12 0 0 0 0 10.8l3.99-3.11Z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.44-3.44C17.94 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.28 6.6l3.99 3.11C6.22 6.86 8.87 4.75 12 4.75Z"
+                />
+              </svg>
+            )}
+            Continuar con Google
+          </button>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/[0.08]" />
+            <span className="text-[11px] uppercase tracking-[0.14em] text-zinc-600">
+              o con tu correo
+            </span>
+            <div className="h-px flex-1 bg-white/[0.08]" />
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>

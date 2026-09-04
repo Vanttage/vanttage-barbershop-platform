@@ -27,6 +27,15 @@ export const UpdateAppointmentSchema = z.object({
   status: z.enum(appointmentStatuses).optional(),
   notes: z.string().max(500).optional(),
   cancelReason: z.string().max(300).optional(),
+  // Reprogramar: cualquiera de estos tres dispara una revalidación de
+  // disponibilidad (ver PATCH /api/appointments/[id]).
+  startsAt: z.string().datetime("startsAt debe ser una fecha ISO valida").optional(),
+  barberId: z.string().optional(),
+  serviceId: z.string().optional(),
+  // Solo junto con status: "completed" — corrige el servicio realmente
+  // prestado y/o el precio final a cobrar. No dispara revalidación de
+  // horario/doble-reserva (la cita ya ocurrió).
+  finalPrice: z.number().int().min(0).optional(),
 });
 
 export const CreateClientSchema = z.object({
@@ -42,6 +51,7 @@ export const CreateBarberSchema = z.object({
   name: z.string().min(2).max(100),
   specialty: z.string().max(100).optional(),
   phone: z.string().max(20).optional(),
+  email: z.union([z.string().email(), z.literal("")]).optional(),
   bio: z.string().max(500).optional(),
   photoUrl: z.string().url().optional(),
   experienceYears: z.number().int().min(0).max(60).optional(),
@@ -73,12 +83,47 @@ export const UpdateServiceSchema = CreateServiceSchema.partial().extend({
   orderIndex: z.number().int().optional(),
 });
 
-export const CreatePaymentSchema = z.object({
-  appointmentId: z.string().min(1, "appointmentId es obligatorio"),
-  method: z.enum(["cash", "transfer", "card", "nequi", "daviplata"]),
-  amount: z.number().int().min(0),
-  status: z.enum(["pending", "paid", "failed", "refunded"]).default("paid"),
+const paymentMethodSchema = z.enum(["cash", "transfer", "card", "nequi", "daviplata"]);
+
+export const CreatePaymentSchema = z
+  .object({
+    appointmentId: z.string().min(1, "appointmentId es obligatorio"),
+    method: paymentMethodSchema.optional(),
+    amount: z.number().int().min(0),
+    status: z.enum(["pending", "paid", "failed", "refunded"]).default("pending"),
+    reference: z.string().max(120).optional(),
+  })
+  .refine((d) => d.status !== "paid" || !!d.method, {
+    message: "El método de pago es obligatorio para marcar un pago como pagado",
+    path: ["method"],
+  });
+
+export const RegisterPaymentSchema = z.object({
+  method: paymentMethodSchema,
   reference: z.string().max(120).optional(),
+});
+
+// ── Caja ─────────────────────────────────────────────────────────────────
+
+export const OpenCashSessionSchema = z.object({
+  openingAmount: z.number().int().min(0, "El efectivo inicial no puede ser negativo"),
+});
+
+export const CloseCashSessionSchema = z.object({
+  countedCash: z.number().int().min(0, "El efectivo contado no puede ser negativo"),
+  note: z.string().max(300).optional(),
+});
+
+export const CreateCashMovementSchema = z.object({
+  type: z.enum(["expense", "adjustment"]),
+  // Magnitud siempre positiva en el request — el signo lo decide `direction`
+  // (para "expense" se fuerza a salida sin importar lo que llegue aquí).
+  amount: z.number().int().positive("El monto debe ser mayor a cero"),
+  direction: z.enum(["in", "out"]).default("out"),
+  method: paymentMethodSchema,
+  concept: z.string().min(2, "Describe el movimiento").max(150),
+  category: z.string().max(50).optional(),
+  note: z.string().max(300).optional(),
 });
 
 const timeSchema = z
@@ -86,6 +131,28 @@ const timeSchema = z
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora invalida");
 
 const optionalUrlSchema = z.union([z.string().url(), z.literal(""), z.undefined()]);
+
+const scheduleDaySchema = z
+  .object({
+    dayOfWeek: z.number().int().min(0).max(6),
+    isAvailable: z.boolean(),
+    startTime: timeSchema,
+    endTime: timeSchema,
+  })
+  .refine((d) => !d.isAvailable || d.startTime < d.endTime, {
+    message: "La hora de inicio debe ser antes que la hora de fin",
+    path: ["endTime"],
+  });
+
+export const UpdateScheduleSchema = z.object({
+  schedules: z
+    .array(scheduleDaySchema)
+    .length(7, "Debes enviar los 7 dias de la semana")
+    .refine(
+      (days) => new Set(days.map((d) => d.dayOfWeek)).size === 7,
+      { message: "Cada dia de la semana debe aparecer una sola vez" },
+    ),
+});
 
 export const UpdateBarbershopSettingsSchema = z.object({
   tenantName: z.string().min(2).max(100),
@@ -130,6 +197,22 @@ export const RegisterSchema = z
     message: "Las contrasenas no coinciden",
     path: ["confirmPassword"],
   });
+
+// Registro completado tras "Continuar con Google": nombre, email y
+// verificación ya los dio Google — solo falta lo que Google no sabe.
+export const CompleteGoogleRegistrationSchema = z.object({
+  tenantName: z.string().min(2).max(100),
+  slug: z
+    .string()
+    .min(2)
+    .max(50)
+    .regex(/^[a-z0-9-]+$/, "Solo letras minusculas, numeros y guiones"),
+  phone: z.string().max(20).optional(),
+  city: z.string().max(100).optional(),
+  country: z.string().max(80).optional(),
+  instagram: z.string().max(100).optional(),
+  plan: z.enum(["basico", "pro", "premium"]).default("pro"),
+});
 
 export const ForgotPasswordSchema = z.object({
   email: z.string().email("Email invalido"),

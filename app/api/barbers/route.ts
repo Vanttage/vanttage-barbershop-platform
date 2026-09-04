@@ -12,42 +12,58 @@ export async function GET(request: NextRequest) {
   }
 
   const onlyActive = request.nextUrl.searchParams.get("active") !== "false";
+  const now = new Date();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
+  const activeStatuses = ["pending", "confirmed", "in_progress"] as const;
 
-  const barbers = await prisma.barber.findMany({
-    where: {
-      tenantId: ctx.tenantId,
-      barbershopId: ctx.barbershopId,
-      ...(onlyActive ? { active: true } : {}),
-    },
-    include: {
-      schedules: true,
-      _count: { select: { appointments: true, favorites: true } },
-      appointments: {
-        where: {
-          startsAt: { gte: today, lte: todayEnd },
-          status: { not: "cancelled" },
-        },
-        select: { id: true },
+  const [barbers, upcomingGroups] = await Promise.all([
+    prisma.barber.findMany({
+      where: {
+        tenantId: ctx.tenantId,
+        barbershopId: ctx.barbershopId,
+        ...(onlyActive ? { active: true } : {}),
       },
-    },
-    orderBy: [{ orderIndex: "asc" }, { name: "asc" }],
-  });
+      include: {
+        schedules: true,
+        _count: { select: { favorites: true } },
+        appointments: {
+          where: {
+            startsAt: { gte: today, lte: todayEnd },
+            status: { not: "cancelled" },
+          },
+          select: { id: true },
+        },
+      },
+      orderBy: [{ orderIndex: "asc" }, { name: "asc" }],
+    }),
+    // Citas futuras activas por barbero — se usa para advertir antes de
+    // desactivar (ver DELETE) sin bloquear la acción ni perder el historial.
+    prisma.appointment.groupBy({
+      by: ["barberId"],
+      where: {
+        tenantId: ctx.tenantId,
+        barbershopId: ctx.barbershopId,
+        startsAt: { gte: now },
+        status: { in: [...activeStatuses] },
+      },
+      _count: { barberId: true },
+    }),
+  ]);
+
+  const upcomingByBarber = new Map(upcomingGroups.map((g) => [g.barberId, g._count.barberId]));
 
   const result = barbers.map((barber) => ({
     ...barber,
     appointmentsToday: barber.appointments.length,
+    upcomingAppointments: upcomingByBarber.get(barber.id) ?? 0,
     favoriteCount: barber._count.favorites,
     appointments: undefined,
   }));
 
-  const res = NextResponse.json({ data: result });
-  // Barbers cambian poco — cachear 30 s en el cliente, aceptar stale 60 s
-  res.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
-  return res;
+  return NextResponse.json({ data: result });
 }
 
 export async function POST(request: NextRequest) {

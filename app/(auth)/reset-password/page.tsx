@@ -68,7 +68,7 @@ function ResetPasswordPageContent() {
         </div>
         <h1 className="font-display text-[22px] font-bold text-zinc-100">Enlace inválido</h1>
         <p className="mt-2 text-sm text-zinc-500">Este enlace de restablecimiento no es válido o ya expiró. Solicita uno nuevo.</p>
-        <Link href="/forgot-password" className="mt-6 block w-full rounded-xl border border-gold-b bg-gold-subtle px-4 py-3 text-center text-sm font-medium text-gold-light transition hover:bg-[rgba(182,134,44,0.18)]">
+        <Link href="/forgot-password" className="mt-6 block w-full rounded-xl border border-gold-border bg-gold-subtle px-4 py-3 text-center text-sm font-medium text-gold-light transition hover:bg-[rgba(182,134,44,0.18)]">
           Solicitar nuevo enlace
         </Link>
       </div>
@@ -88,7 +88,7 @@ function ResetPasswordPageContent() {
           Tu contraseña se cambió correctamente. Redirigiendo al login en{" "}
           <span className="text-gold-light font-medium">{countdown}s</span>...
         </p>
-        <Link href="/login" className="mt-6 block w-full rounded-xl border border-white/[0.06] bg-zinc-800/50 px-4 py-3 text-center text-sm font-medium text-zinc-300 transition hover:border-gold-b hover:text-gold-light">
+        <Link href="/login" className="mt-6 block w-full rounded-xl border border-white/[0.06] bg-zinc-800/50 px-4 py-3 text-center text-sm font-medium text-zinc-300 transition hover:border-gold-border hover:text-gold-light">
           Ir al login ahora
         </Link>
       </div>
@@ -115,7 +115,7 @@ function ResetPasswordPageContent() {
             onChange={(event) => setPassword(event.target.value)}
             required
             minLength={8}
-            className="w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-gold-b"
+            className="w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-gold-border"
             placeholder="Mínimo 8 caracteres"
           />
         </div>
@@ -129,7 +129,7 @@ function ResetPasswordPageContent() {
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
             required
-            className="w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-gold-b"
+            className="w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-gold-border"
             placeholder="Repite la contraseña"
           />
         </div>
@@ -143,7 +143,7 @@ function ResetPasswordPageContent() {
         <button
           type="submit"
           disabled={loading || !password || !confirmPassword}
-          className="w-full rounded-xl border border-gold-b bg-gold-subtle px-4 py-3 text-sm font-medium text-gold-light transition hover:bg-[rgba(182,134,44,0.18)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl border border-gold-border bg-gold-subtle px-4 py-3 text-sm font-medium text-gold-light transition hover:bg-[rgba(182,134,44,0.18)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Actualizando..." : "Guardar contraseña"}
         </button>

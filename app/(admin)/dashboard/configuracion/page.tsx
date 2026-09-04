@@ -58,7 +58,7 @@ type FormData = {
 };
 
 const FIELD_CLASS =
-  "w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-gold-b placeholder:text-zinc-600";
+  "w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-gold-border placeholder:text-zinc-600";
 const LABEL_CLASS =
   "mb-1.5 flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.12em] text-zinc-500";
 
@@ -224,7 +224,7 @@ export default function ConfiguracionPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={saving || loading}
-                className="flex items-center gap-2 rounded-xl border border-gold-b bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex items-center gap-2 rounded-xl border border-gold-border bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {saving ? (
                   "Guardando..."
@@ -386,7 +386,7 @@ export default function ConfiguracionPage() {
                 ))}
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs text-zinc-600">Plan</span>
-                  <span className="rounded-full border border-gold-b bg-gold-subtle px-2.5 py-0.5 text-[10.5px] font-medium capitalize text-gold-light">
+                  <span className="rounded-full border border-gold-border bg-gold-subtle px-2.5 py-0.5 text-[10.5px] font-medium capitalize text-gold-light">
                     {data?.plan ?? "pro"}
                   </span>
                 </div>

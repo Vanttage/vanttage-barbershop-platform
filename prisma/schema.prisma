@@ -68,6 +68,16 @@ enum NotificationStatus {
   failed
 }
 
+enum CashSessionStatus {
+  open
+  closed
+}
+
+enum CashMovementType {
+  expense
+  adjustment
+}
+
 model Tenant {
   id                  String    @id @default(uuid())
   name                String
@@ -110,6 +120,8 @@ model Tenant {
   notifications       Notification[]
   passwordResetTokens PasswordResetToken[]
   Schedule            Schedule[]
+  cashSessions        CashSession[]
+  cashMovements       CashMovement[]
 
   @@map("tenants")
 }
@@ -147,6 +159,8 @@ model Barbershop {
   payments         Payment[]
   notifications    Notification[]
   favorites        FavoriteBarber[]
+  cashSessions     CashSession[]
+  cashMovements    CashMovement[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, active])
@@ -158,7 +172,10 @@ model User {
   tenantId            String?
   defaultBarbershopId String?
   email               String    @unique
-  passwordHash        String
+  // Null para cuentas creadas solo con Google (sin contraseña) — ver
+  // authorize() en src/lib/auth.ts, que ya trata null como "no puede
+  // entrar por credenciales".
+  passwordHash        String?
   name                String
   role                UserRole  @default(client)
   avatarUrl           String?
@@ -176,6 +193,9 @@ model User {
   clientProfile       Client?
   passwordResetTokens PasswordResetToken[]
   historyEntries      AppointmentHistory[]   @relation("HistoryActor")
+  cashSessionsOpened  CashSession[]          @relation("CashSessionOpenedBy")
+  cashSessionsClosed  CashSession[]          @relation("CashSessionClosedBy")
+  cashMovements       CashMovement[]         @relation("CashMovementActor")
 
   @@index([tenantId])
   @@index([defaultBarbershopId])
@@ -212,6 +232,7 @@ model Barber {
   photoUrl        String?
   bio             String?
   phone           String?
+  email           String?
   active          Boolean  @default(true)
   rating          Float    @default(5)
   orderIndex      Int      @default(0)
@@ -370,7 +391,10 @@ model Payment {
   barbershopId  String
   appointmentId String
   clientId      String
-  method        PaymentMethod
+  // Nulo mientras el pago está pendiente — el método se define al cobrar,
+  // no al nacer el pendiente (que se crea automáticamente al completar
+  // la cita, sin que nadie haya elegido todavía cómo se va a pagar).
+  method        PaymentMethod?
   amount        Int
   status        PaymentStatus @default(pending)
   reference     String?
@@ -386,6 +410,79 @@ model Payment {
   @@index([tenantId, barbershopId, createdAt])
   @@index([appointmentId, status])
   @@map("payments")
+}
+
+// ── Caja ───────────────────────────────────────────────────────────────────
+// Caja ≠ Pagos. Pagos registra cada cobro; Caja controla el dinero de la
+// jornada. Los ingresos de una jornada NUNCA se duplican aquí — se calculan
+// en tiempo real a partir de Payment (status=paid, paidAt dentro de
+// [openedAt, closedAt ?? now]). CashMovement solo guarda lo que Payment no
+// puede representar: gastos y ajustes manuales de caja.
+model CashSession {
+  id              String            @id @default(uuid())
+  tenantId        String
+  barbershopId    String
+  openingAmount   Int
+  // Calculados y congelados al cerrar — nunca se recalculan después, para
+  // que el historial de cierres sea un registro fijo, no una vista viva.
+  expectedCash    Int?
+  countedCash     Int?
+  difference      Int?
+  status          CashSessionStatus @default(open)
+  closeNote       String?
+  openedByUserId  String?
+  closedByUserId  String?
+  openedAt        DateTime          @default(now())
+  closedAt        DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  tenant     Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop Barbershop     @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  openedBy   User?          @relation("CashSessionOpenedBy", fields: [openedByUserId], references: [id], onDelete: SetNull)
+  closedBy   User?          @relation("CashSessionClosedBy", fields: [closedByUserId], references: [id], onDelete: SetNull)
+  movements  CashMovement[]
+
+  // Solo puede existir una caja abierta por barbería a la vez — se aplica
+  // en la API (buscar status=open antes de crear), esta es la salvaguarda
+  // a nivel de consulta rápida.
+  @@index([tenantId, barbershopId, status])
+  @@index([tenantId, barbershopId, openedAt])
+  @@map("cash_sessions")
+}
+
+// Gastos y ajustes son inmutables una vez creados — nunca se editan ni se
+// borran (ni con la caja abierta ni cerrada). Para corregir un error se
+// crea OTRO movimiento (type=adjustment) que lo compensa, dejando rastro
+// de quién y cuándo — nunca se sobrescribe silenciosamente un monto.
+model CashMovement {
+  id            String           @id @default(uuid())
+  tenantId      String
+  barbershopId  String
+  cashSessionId String
+  type          CashMovementType
+  // Firmado: positivo suma a la caja, negativo resta. Un "expense" siempre
+  // se guarda negativo (se fuerza en la API sin importar qué firma venga
+  // del cliente); un "adjustment" puede ir en cualquier sentido.
+  amount        Int
+  // Determina si afecta el efectivo físico esperado (method=cash) o es
+  // puramente informativo para digital (nequi/transferencia/tarjeta no
+  // mueven el cajón físico).
+  method        PaymentMethod
+  concept       String
+  category      String?
+  note          String?
+  actorUserId   String?
+  createdAt     DateTime         @default(now())
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  barbershop  Barbershop  @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  cashSession CashSession @relation(fields: [cashSessionId], references: [id], onDelete: Cascade)
+  actor       User?       @relation("CashMovementActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([cashSessionId])
+  @@index([tenantId, barbershopId, createdAt])
+  @@map("cash_movements")
 }
 
 model FavoriteBarber {

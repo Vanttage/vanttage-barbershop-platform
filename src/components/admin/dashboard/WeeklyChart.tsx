@@ -110,17 +110,28 @@ export default function WeeklyChart() {
       </div>
 
       {/* Chart */}
-      <div className="flex h-40 items-end gap-2">
+      {/*
+        La fila necesita altura fija (h-40) y las columnas deben ESTIRARSE
+        para heredarla (por eso no hay items-end aquí) — si no, la barra de
+        adentro con height:X% no tiene contra qué resolver ese porcentaje
+        (su ancestro directo queda con altura "auto") y nunca se pinta con
+        el tamaño correcto. El wrapper interno usa flex-1 en vez de h-full
+        por el mismo motivo: flex-1 sí produce un alto real en un columna
+        ya estirada; h-full contra un padre "auto" no.
+      */}
+      <div className="flex h-40 gap-2">
         {loading
           ? Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className="flex flex-1 flex-col items-center justify-end gap-2"
+                className="flex flex-1 flex-col items-center gap-2"
               >
-                <div
-                  className="w-full rounded-md bg-white/[0.08] animate-pulse"
-                  style={{ height: `${30 + ((i * 13) % 50)}%` }}
-                />
+                <div className="flex w-full flex-1 items-end">
+                  <div
+                    className="w-full rounded-md bg-white/[0.08] animate-pulse"
+                    style={{ height: `${30 + ((i * 13) % 50)}%` }}
+                  />
+                </div>
                 <div className="h-3 w-6 rounded bg-white/[0.06] animate-pulse" />
               </div>
             ))
@@ -135,9 +146,9 @@ export default function WeeklyChart() {
                   key={d.day}
                   onMouseEnter={() => setHovered(i)}
                   onMouseLeave={() => setHovered(null)}
-                  className="flex flex-1 cursor-pointer flex-col items-center justify-end gap-2"
+                  className="flex flex-1 cursor-pointer flex-col items-center gap-2"
                 >
-                  <div className="flex h-full w-full items-end">
+                  <div className="flex w-full flex-1 items-end">
                     <div
                       className={[
                         "w-full rounded-md transition-all duration-200",
@@ -165,4 +176,3 @@ export default function WeeklyChart() {
     </section>
   );
 }
-``;

@@ -18,7 +18,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Vanttage - Gestión de Barberías",
+  title: "NAVA - Gestión de Barberías",
   description:
     "Plataforma SaaS para gestionar barberias con reservas, clientes y automatizaciones.",
 };

@@ -85,20 +85,11 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Barbero no encontrado" }, { status: 404 });
   }
 
-  const hasActiveAppointments = await prisma.appointment.count({
-    where: {
-      barberId: id,
-      status: { in: ["pending", "confirmed", "in_progress"] },
-    },
-  });
-
-  if (hasActiveAppointments > 0) {
-    return NextResponse.json(
-      { error: "El barbero tiene citas activas. Cancelalas antes de eliminar." },
-      { status: 409 },
-    );
-  }
-
+  // Desactivar nunca borra ni bloquea por citas existentes — el historial
+  // (pasado y futuro) se conserva íntegro. El aviso sobre citas futuras se
+  // muestra en la UI antes de confirmar (usa `upcomingAppointments` de
+  // GET /api/barbers), no aquí: el admin decide, el sistema no le impide
+  // desactivar a alguien con citas pendientes.
   await prisma.barber.update({
     where: { id },
     data: { active: false },

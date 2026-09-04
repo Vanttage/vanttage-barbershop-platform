@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import { requireUserWithRole } from "@/src/lib/authorization";
 import { getTenantContext } from "@/src/lib/tenant";
@@ -88,6 +89,19 @@ export async function POST(request: NextRequest) {
     invalidateByPrefix(`dashboard:${ctx.barbershopId}`);
     return NextResponse.json({ data: appointment }, { status: 201 });
   } catch (error) {
+    // P2034: Postgres abortó la transacción Serializable por conflicto de
+    // escritura — dos reservas simultáneas para el mismo horario. No es un
+    // error del cliente, es la protección contra doble reserva funcionando.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2034"
+    ) {
+      return NextResponse.json(
+        { error: "Alguien más reservó este horario justo ahora. Intenta de nuevo." },
+        { status: 409 },
+      );
+    }
+
     const message = error instanceof Error ? error.message : "Error interno";
     const status = message.includes("Conflicto") || message.includes("ocupado")
       ? 409

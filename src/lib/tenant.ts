@@ -68,15 +68,22 @@ export async function getTenantContext(slugOverride?: string | null): Promise<Te
   // 1. Middleware header — set for tenant subdomain routes (rey.vanttagetech.com)
   if (!tenantSlug) tenantSlug = headersList.get("x-tenant-slug");
 
-  // 2. Dev fallback
-  if (!tenantSlug && process.env.NODE_ENV === "development") {
-    tenantSlug = process.env.VANTTAGE_DEV_TENANT ?? null;
+  // 2. Session — for authenticated dashboard/API routes accessed from
+  //    app.vanttagetech.com where no subdomain tenant can be resolved. A real
+  //    logged-in user's own tenant must win over any dev/cookie heuristic below
+  //    — otherwise every authenticated request on localhost gets silently
+  //    routed to VANTTAGE_DEV_TENANT instead of the user's real tenant.
+  if (!tenantSlug) {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.tenantSlug) {
+      tenantSlug = session.user.tenantSlug;
+    }
   }
 
-  // 3. Cookie fallback — for client-side API calls from the public booking page.
-  //    Safari iOS and other browsers may not propagate the x-tenant-slug header
-  //    through the Edge middleware correctly; reading the cookie directly in the
-  //    Node.js runtime is more reliable.
+  // 3. Cookie fallback — for anonymous client-side API calls from the public
+  //    booking page. Safari iOS and other browsers may not propagate the
+  //    x-tenant-slug header through the Edge middleware correctly; reading the
+  //    cookie directly in the Node.js runtime is more reliable.
   if (!tenantSlug) {
     const cookieStore = await cookies();
     const c = cookieStore.get("tenant-slug");
@@ -85,13 +92,10 @@ export async function getTenantContext(slugOverride?: string | null): Promise<Te
     }
   }
 
-  // 4. Session fallback — for authenticated dashboard/API routes accessed from
-  //    app.vanttagetech.com where no subdomain tenant can be resolved.
-  if (!tenantSlug) {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.tenantSlug) {
-      tenantSlug = session.user.tenantSlug;
-    }
+  // 4. Dev fallback — last resort, only for anonymous requests on localhost
+  //    with no session and no cookie (e.g. testing the booking page directly).
+  if (!tenantSlug && process.env.NODE_ENV === "development") {
+    tenantSlug = process.env.VANTTAGE_DEV_TENANT ?? null;
   }
 
   if (!tenantSlug) {

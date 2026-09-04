@@ -21,10 +21,14 @@ const FILTERS: { label: string; value: AppointmentStatus | "all" }[] = [
   { label: "Canceladas", value: "cancelled" },
 ];
 
+// "completed" a propósito no está aquí: completar una cita debe pasar por
+// el flujo de Agenda, que deja confirmar o corregir el servicio/precio
+// real antes de cerrarla (ver ApptDetailModal). Una vez completada ya no
+// se puede reprogramar, así que un atajo directo aquí dejaría un precio
+// incorrecto sin forma de corregirlo.
 const STATUS_ACTIONS: AppointmentStatus[] = [
   "confirmed",
   "in_progress",
-  "completed",
   "cancelled",
 ];
 
@@ -146,6 +150,43 @@ const AppointmentRow = memo(function AppointmentRow({
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+});
+
+/* ---------- Mobile card ---------- */
+
+const AppointmentCardMobile = memo(function AppointmentCardMobile({
+  appt,
+}: {
+  appt: AppointmentWithRelations;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-white/[0.04] px-5 py-3.5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-[11px] font-semibold text-zinc-300">
+          {getInitials(appt.client.name)}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-[13px] font-medium text-zinc-100">
+            {appt.client.name}
+          </p>
+          <p className="truncate text-[11px] text-zinc-500">
+            {appt.service.name} · {appt.barber.name.split(" ")[0]}
+          </p>
+        </div>
+      </div>
+      <div className="flex-shrink-0 text-right">
+        <p className="tabular-nums text-[12.5px] font-medium text-zinc-300">
+          {formatTime(appt.startsAt)}
+        </p>
+        <p className="text-[13px] font-semibold text-zinc-100">
+          {formatCOP(appt.total)}
+        </p>
+        <div className="mt-1 flex justify-end">
+          <StatusBadge status={appt.status} />
+        </div>
       </div>
     </div>
   );
@@ -278,15 +319,22 @@ export default function AppointmentsList() {
           No hay citas para hoy
         </div>
       ) : (
-        <div className="hidden md:block">
-          {appointments.map((a) => (
-            <AppointmentRow
-              key={a.id}
-              appt={a}
-              onStatusChange={handleStatusChange}
-            />
-          ))}
-        </div>
+        <>
+          <div className="hidden md:block">
+            {appointments.map((a) => (
+              <AppointmentRow
+                key={a.id}
+                appt={a}
+                onStatusChange={handleStatusChange}
+              />
+            ))}
+          </div>
+          <div className="md:hidden">
+            {appointments.map((a) => (
+              <AppointmentCardMobile key={a.id} appt={a} />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Footer */}

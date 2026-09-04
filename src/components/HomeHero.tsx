@@ -124,7 +124,7 @@ export default function HomeHero() {
             <div className="anim-fade-up d-3 mt-8 flex flex-wrap gap-3">
               <Link
                 href="/register"
-                className="rounded-xl border border-gold-b bg-gold-subtle px-5 py-3 text-sm font-medium text-gold-light transition hover:bg-[rgba(182,134,44,0.18)]"
+                className="rounded-xl border border-gold-border bg-gold-subtle px-5 py-3 text-sm font-medium text-gold-light transition hover:bg-[rgba(182,134,44,0.18)]"
               >
                 Crear barberia
               </Link>

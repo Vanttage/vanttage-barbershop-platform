@@ -23,7 +23,7 @@ const BookingLinkCard = dynamic(
   },
 );
 
-export const metadata = { title: "Dashboard · VANTTAGE" };
+export const metadata = { title: "Dashboard · NAVA" };
 
 const AUTO_ITEMS = [
   { label: "WhatsApp confirmaciones", on: true },

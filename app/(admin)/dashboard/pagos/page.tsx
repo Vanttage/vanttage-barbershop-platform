@@ -19,9 +19,11 @@ import {
   X,
   Plus,
   Filter,
+  Wallet,
 } from "lucide-react";
 
-type PaymentRow = Payment & {
+type PaymentRow = Omit<Payment, "method"> & {
+  method: Payment["method"] | null;
   client: { id: string; name: string; phone: string; email: string | null };
   appointment: {
     id: string;
@@ -48,10 +50,119 @@ const STATUS_CONFIG_PAY: Record<string, { label: string; icon: React.ReactNode; 
   refunded: { label: "Reembolsado", icon: <RotateCcw size={12} />, color: "text-zinc-400", bg: "bg-zinc-700/40", border: "border-white/[0.07]" },
 };
 
-const FIELD_CLASS = "w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-gold-b";
+const FIELD_CLASS = "w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-gold-border";
 const LABEL_CLASS = "mb-1.5 block text-[10.5px] uppercase tracking-[0.12em] text-zinc-500";
 
-function RegisterPaymentModal({
+// Cobrar un pendiente: nace solo al completar una cita (ver Agenda). Aquí
+// solo se elige el método — el monto ya quedó fijado al completar.
+function MarkPaidModal({
+  payment,
+  onClose,
+  onUpdated,
+}: {
+  payment: PaymentRow;
+  onClose: () => void;
+  onUpdated: () => void;
+}) {
+  const [method, setMethod] = useState("cash");
+  const [reference, setReference] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    setSaving(true);
+    setError("");
+    const { error: apiError } = await apiCall(`/api/payments/${payment.id}`, "PATCH", {
+      method,
+      reference: reference || undefined,
+    });
+    setSaving(false);
+    if (apiError) { setError(apiError); return; }
+    onUpdated();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[#18181C] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
+          <div>
+            <h2 className="font-display text-base font-semibold text-zinc-100">Registrar pago</h2>
+            <p className="mt-0.5 text-xs text-zinc-500">{payment.client.name} · {payment.appointment.service.name}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-4 p-6">
+          <div className="rounded-xl border border-gold-border bg-gold-subtle px-4 py-3 text-center">
+            <div className="text-[11px] uppercase tracking-wider text-zinc-500">Cobro pendiente</div>
+            <div className="mt-1 text-2xl font-semibold text-gold-light">{formatCOP(payment.amount)}</div>
+          </div>
+
+          <div>
+            <label className={LABEL_CLASS}>Metodo de pago</label>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(METHOD_CONFIG).filter(([v]) => v !== "card").map(([v, cfg]) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setMethod(v)}
+                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition ${
+                    method === v
+                      ? "border-gold-border bg-gold-subtle text-gold-light"
+                      : "border-white/[0.06] bg-zinc-800/60 text-zinc-400 hover:border-white/[0.12]"
+                  }`}
+                >
+                  <span className={method === v ? "text-gold-light" : cfg.color}>{cfg.icon}</span>
+                  {cfg.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className={LABEL_CLASS}>Referencia (opcional)</label>
+            <input
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="Comprobante, ref. transferencia..."
+              className={FIELD_CLASS}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="mx-6 mb-4 flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300">
+            <AlertTriangle size={14} /> {error}
+          </div>
+        )}
+
+        <div className="flex gap-3 border-t border-white/[0.06] px-6 py-4">
+          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm text-zinc-400 transition hover:border-white/[0.16] hover:text-zinc-200">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving}
+            className="flex-1 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2.5 text-sm font-medium text-emerald-300 transition hover:bg-emerald-400/20 disabled:opacity-40"
+          >
+            {saving ? "Guardando..." : "Confirmar pago"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Respaldo manual: solo para citas ya completadas que por algo no tengan
+// pago (no debería pasar — nace automático al completar — pero cubre
+// datos históricos o casos raros). Nunca ofrece citas simplemente reservadas.
+function AddMissingPaymentModal({
   appointments,
   onClose,
   onCreated,
@@ -60,28 +171,20 @@ function RegisterPaymentModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [form, setForm] = useState({
-    appointmentId: "",
-    method: "cash",
-    amount: "",
-    status: "paid",
-    reference: "",
-  });
+  const [appointmentId, setAppointmentId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const selectedAppt = appointments.find((a) => a.id === form.appointmentId);
+  const selectedAppt = appointments.find((a) => a.id === appointmentId);
 
   const handleSubmit = async () => {
-    if (!form.appointmentId) { setError("Selecciona una cita"); return; }
+    if (!appointmentId) { setError("Selecciona una cita"); return; }
     setSaving(true);
     setError("");
     const { error: apiError } = await apiCall("/api/payments", "POST", {
-      appointmentId: form.appointmentId,
-      method: form.method,
-      amount: Number(form.amount || selectedAppt?.total || 0),
-      status: form.status,
-      reference: form.reference || undefined,
+      appointmentId,
+      amount: selectedAppt?.total ?? 0,
+      status: "pending",
     });
     setSaving(false);
     if (apiError) { setError(apiError); return; }
@@ -93,26 +196,29 @@ function RegisterPaymentModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#18181C] shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#18181C] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
           <div>
-            <h2 className="font-display text-base font-semibold text-zinc-100">Registrar pago</h2>
-            <p className="mt-0.5 text-xs text-zinc-500">Deja trazabilidad operativa del cobro por cita.</p>
+            <h2 className="font-display text-base font-semibold text-zinc-100">Agregar pago faltante</h2>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              Solo para citas ya completadas sin pago registrado. Lo normal es que el pendiente nazca solo al completar.
+            </p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200">
             <X size={16} />
           </button>
         </div>
 
-        <div className="grid gap-4 p-6 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <label className={LABEL_CLASS}>Cita</label>
+        <div className="p-6">
+          <label className={LABEL_CLASS}>Cita completada sin pago</label>
+          {appointments.length === 0 ? (
+            <p className="rounded-xl border border-white/[0.06] bg-zinc-800/40 px-4 py-3 text-sm text-zinc-500">
+              No hay citas completadas sin pago — todo está en orden.
+            </p>
+          ) : (
             <select
-              value={form.appointmentId}
-              onChange={(e) => {
-                const appt = appointments.find((a) => a.id === e.target.value);
-                setForm((p) => ({ ...p, appointmentId: e.target.value, amount: appt?.total?.toString() ?? p.amount }));
-              }}
+              value={appointmentId}
+              onChange={(e) => setAppointmentId(e.target.value)}
               className={FIELD_CLASS}
             >
               <option value="">Selecciona una cita</option>
@@ -122,48 +228,6 @@ function RegisterPaymentModal({
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Metodo de pago</label>
-            <select value={form.method} onChange={(e) => setForm((p) => ({ ...p, method: e.target.value }))} className={FIELD_CLASS}>
-              {Object.entries(METHOD_CONFIG).map(([v, { label }]) => (
-                <option key={v} value={v}>{label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Monto (COP)</label>
-            <input
-              type="number"
-              min="0"
-              value={form.amount}
-              onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
-              placeholder={selectedAppt ? String(selectedAppt.total) : "0"}
-              className={FIELD_CLASS}
-            />
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Estado</label>
-            <select value={form.status} onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))} className={FIELD_CLASS}>
-              {Object.entries(STATUS_CONFIG_PAY).map(([v, { label }]) => (
-                <option key={v} value={v}>{label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Referencia (opcional)</label>
-            <input
-              value={form.reference}
-              onChange={(e) => setForm((p) => ({ ...p, reference: e.target.value }))}
-              placeholder="Comprobante, ref. transferencia..."
-              className={FIELD_CLASS}
-            />
-          </div>
-          {selectedAppt && (
-            <div className="md:col-span-2 rounded-xl border border-gold-b bg-gold-subtle px-4 py-3 text-sm text-zinc-300">
-              {selectedAppt.client.name} con {selectedAppt.barber.name} · {selectedAppt.service.name} ·{" "}
-              <span className="font-semibold text-gold-light">{formatCOP(selectedAppt.total)}</span>
-            </div>
           )}
         </div>
 
@@ -180,10 +244,10 @@ function RegisterPaymentModal({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={saving || !form.appointmentId}
-            className="flex-1 rounded-xl border border-gold-b bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)] disabled:opacity-40"
+            disabled={saving || !appointmentId}
+            className="flex-1 rounded-xl border border-gold-border bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving ? "Guardando..." : "Registrar pago"}
+            {saving ? "Guardando..." : "Crear pendiente"}
           </button>
         </div>
       </div>
@@ -192,7 +256,8 @@ function RegisterPaymentModal({
 }
 
 export default function PagosPage() {
-  const [showModal, setShowModal] = useState(false);
+  const [showAddMissing, setShowAddMissing] = useState(false);
+  const [payingId, setPayingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterMethod, setFilterMethod] = useState("all");
 
@@ -207,6 +272,13 @@ export default function PagosPage() {
     return { paid: paid.length, pending: pending.length, failed: failed.length, revenue };
   }, [payments]);
 
+  // Citas completadas que por algo no tienen pago — solo para el respaldo
+  // manual. En el flujo normal esta lista siempre está vacía.
+  const appointmentsMissingPayment = useMemo(() => {
+    const withPayment = new Set(payments.map((p) => p.appointment.id));
+    return appointments.filter((a) => a.status === "completed" && !withPayment.has(a.id));
+  }, [appointments, payments]);
+
   const filtered = useMemo(() =>
     payments.filter((p) =>
       (filterStatus === "all" || p.status === filterStatus) &&
@@ -215,15 +287,24 @@ export default function PagosPage() {
     [payments, filterStatus, filterMethod],
   );
 
+  const payingPayment = payments.find((p) => p.id === payingId) ?? null;
+
   return (
     <div className="flex min-h-screen flex-1 flex-col bg-zinc-950">
       <Header title="Pagos" />
 
-      {showModal && (
-        <RegisterPaymentModal
-          appointments={appointments}
-          onClose={() => setShowModal(false)}
-          onCreated={() => { setShowModal(false); refetch(); }}
+      {showAddMissing && (
+        <AddMissingPaymentModal
+          appointments={appointmentsMissingPayment}
+          onClose={() => setShowAddMissing(false)}
+          onCreated={() => { setShowAddMissing(false); refetch(); }}
+        />
+      )}
+      {payingPayment && (
+        <MarkPaidModal
+          payment={payingPayment}
+          onClose={() => setPayingId(null)}
+          onUpdated={() => { setPayingId(null); refetch(); }}
         />
       )}
 
@@ -277,17 +358,18 @@ export default function PagosPage() {
             </div>
             <button
               type="button"
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 rounded-xl border border-gold-b bg-gold-subtle px-4 py-2.5 text-sm font-medium text-gold-light transition hover:bg-[rgba(201,168,76,0.18)]"
+              onClick={() => setShowAddMissing(true)}
+              title="Solo para citas completadas sin pago — el flujo normal es automático"
+              className="flex items-center gap-2 rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm text-zinc-400 transition hover:border-white/[0.16] hover:text-zinc-200"
             >
               <Plus size={14} />
-              Registrar pago
+              Agregar pago faltante
             </button>
           </div>
 
           {/* Table header */}
-          <div className="grid grid-cols-[1fr_160px_160px_110px_100px] gap-3 border-b border-white/[0.04] px-5 py-3">
-            {["Cliente y cita", "Metodo", "Monto", "Estado", "Fecha"].map((label) => (
+          <div className="grid grid-cols-[1fr_160px_140px_110px_100px_130px] gap-3 border-b border-white/[0.04] px-5 py-3">
+            {["Cliente y cita", "Metodo", "Monto", "Estado", "Fecha", ""].map((label) => (
               <div key={label} className="text-[10px] uppercase tracking-[0.12em] text-zinc-600">{label}</div>
             ))}
           </div>
@@ -299,12 +381,12 @@ export default function PagosPage() {
             ))
           ) : filtered.length > 0 ? (
             filtered.map((payment) => {
-              const methodCfg = METHOD_CONFIG[payment.method];
+              const methodCfg = payment.method ? METHOD_CONFIG[payment.method] : null;
               const statusCfg = STATUS_CONFIG_PAY[payment.status];
               return (
                 <div
                   key={payment.id}
-                  className="grid grid-cols-[1fr_160px_160px_110px_100px] items-center gap-3 border-b border-white/[0.03] px-5 py-4 transition hover:bg-zinc-800/20"
+                  className="grid grid-cols-[1fr_160px_140px_110px_100px_130px] items-center gap-3 border-b border-white/[0.03] px-5 py-4 transition hover:bg-zinc-800/20"
                 >
                   <div>
                     <div className="text-sm font-medium text-zinc-100">{payment.client.name}</div>
@@ -313,13 +395,19 @@ export default function PagosPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={methodCfg?.color ?? "text-zinc-400"}>{methodCfg?.icon}</span>
-                    <div>
-                      <div className="text-sm text-zinc-300">{methodCfg?.label ?? payment.method}</div>
-                      {payment.reference && (
-                        <div className="text-xs text-zinc-600">Ref. {payment.reference}</div>
-                      )}
-                    </div>
+                    {methodCfg ? (
+                      <>
+                        <span className={methodCfg.color}>{methodCfg.icon}</span>
+                        <div>
+                          <div className="text-sm text-zinc-300">{methodCfg.label}</div>
+                          {payment.reference && (
+                            <div className="text-xs text-zinc-600">Ref. {payment.reference}</div>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-sm text-zinc-600">Sin definir</span>
+                    )}
                   </div>
                   <div className="text-sm font-semibold text-gold-light">{formatCOP(payment.amount)}</div>
                   <div>
@@ -330,6 +418,18 @@ export default function PagosPage() {
                   </div>
                   <div className="text-sm text-zinc-500">
                     {new Date(payment.paidAt ?? payment.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
+                  </div>
+                  <div>
+                    {payment.status === "pending" && (
+                      <button
+                        type="button"
+                        onClick={() => setPayingId(payment.id)}
+                        className="flex items-center gap-1.5 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 text-[11.5px] font-medium text-emerald-300 transition hover:bg-emerald-400/20"
+                      >
+                        <Wallet size={12} />
+                        Registrar pago
+                      </button>
+                    )}
                   </div>
                 </div>
               );
