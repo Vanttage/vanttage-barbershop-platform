@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   const rl = await rateLimit(request, { limit: 10, windowMs: 60_000, prefix: "telegram-link" });
   if (!rl.ok) return rateLimitResponse(rl);
 
-  if (!isTelegramConfigured() || !process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME) {
+  if (!isTelegramConfigured() || !process.env.TELEGRAM_BOT_USERNAME) {
     return NextResponse.json({ error: "Telegram no está disponible" }, { status: 503 });
   }
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME;
   return NextResponse.json({
     data: { telegramUrl: `https://t.me/${botUsername}?start=${token}` },
   });

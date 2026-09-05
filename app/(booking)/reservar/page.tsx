@@ -108,6 +108,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
   const [confirmedClientId, setConfirmedClientId] = useState<string | null>(null);
   const [telegramLoading, setTelegramLoading] = useState(false);
   const [telegramLinked, setTelegramLinked] = useState(false);
+  const [telegramError, setTelegramError] = useState("");
 
   // Build query string so all API calls carry the tenant slug explicitly.
   // This bypasses any cookie/header dependency — works reliably on all devices.
@@ -213,13 +214,17 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
   const handleTelegramOptIn = async () => {
     if (!confirmedClientId) return;
     setTelegramLoading(true);
+    setTelegramError("");
     const { data, error: linkError } = await apiCall<{ telegramUrl: string }>(
       "/api/public/telegram-link",
       "POST",
       { clientId: confirmedClientId },
     );
     setTelegramLoading(false);
-    if (linkError || !data) return;
+    if (linkError || !data) {
+      setTelegramError("No disponible por ahora. Intenta más tarde.");
+      return;
+    }
     setTelegramLinked(true);
     window.open(data.telegramUrl, "_blank", "noopener,noreferrer");
   };
@@ -282,7 +287,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
             ))}
           </div>
 
-          {confirmedClientId && process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME && (
+          {confirmedClientId && (
             <div className="bg-[#111113] border border-white/[0.06] rounded-2xl p-5 text-left mb-6">
               {telegramLinked ? (
                 <p className="flex items-center gap-2 text-[13px] text-emerald-400">
@@ -309,6 +314,9 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                     </svg>
                     {telegramLoading ? "Abriendo Telegram..." : "🔔 Recibir por Telegram"}
                   </button>
+                  {telegramError && (
+                    <p className="mt-2 text-[11.5px] text-red-400">{telegramError}</p>
+                  )}
                 </>
               )}
             </div>

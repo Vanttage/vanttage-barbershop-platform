@@ -13,9 +13,10 @@
 //                              valida en cada request entrante para
 //                              confirmar que viene de Telegram y no de un
 //                              tercero que adivinó la URL del webhook.
-//    NEXT_PUBLIC_TELEGRAM_BOT_USERNAME — username del bot (sin @), público,
-//                              usado por el frontend para construir el link
-//                              https://t.me/<username>?start=<token>
+//    TELEGRAM_BOT_USERNAME   — username del bot (sin @) — solo se lee en el
+//                              servidor (POST /api/public/telegram-link),
+//                              que arma el link https://t.me/<username>?start=<token>
+//                              y se lo devuelve al cliente ya resuelto.
 //
 //  Docs: https://core.telegram.org/bots/api
 // ─────────────────────────────────────────────────────────────────────────────
