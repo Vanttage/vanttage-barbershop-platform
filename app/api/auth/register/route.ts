@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { RegisterSchema, validateBody } from "@/src/validations";
 import { rateLimit, rateLimitResponse } from "@/src/lib/rateLimit";
-import { createTenantWithOwner } from "@/src/services/tenantOnboarding";
+import { createTenantWithOwner, sendWelcomeEmailSafely } from "@/src/services/tenantOnboarding";
 
 export async function POST(request: NextRequest) {
   // 3 registros por IP por hora
@@ -61,6 +61,13 @@ export async function POST(request: NextRequest) {
     phone,
     instagram,
     plan,
+  });
+
+  await sendWelcomeEmailSafely({
+    email: result.user.email,
+    ownerName: result.user.name,
+    tenantName: result.tenant.name,
+    tenantSlug: result.tenant.slug,
   });
 
   return NextResponse.json(

@@ -4,7 +4,7 @@
 //  Endpoint de prueba — envía emails reales via Resend.
 //  Headers requeridos: Authorization: Bearer <CRON_SECRET>
 //
-//  GET  /api/test/email?to=user@example.com&type=reset|changed|weekly
+//  GET  /api/test/email?to=user@example.com&type=reset|changed|weekly|welcome
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from "next/server";
@@ -12,6 +12,7 @@ import {
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
   sendWeeklyReportEmail,
+  sendWelcomeEmail,
 } from "@/src/lib/email";
 
 function isAuthorized(req: NextRequest): boolean {
@@ -54,11 +55,20 @@ export async function GET(req: NextRequest) {
       result = await sendPasswordChangedEmail({ to, name: "Usuario Test" });
       break;
 
+    case "welcome":
+      result = await sendWelcomeEmail({
+        to,
+        ownerName: "Propietario Test",
+        barbershopName: "Barbería Demo",
+        tenantSlug: "demo",
+      });
+      break;
+
     case "weekly":
       result = await sendWeeklyReportEmail({
         to,
         ownerName:     "Propietario Test",
-        barbershopName: "Barbería VANTTAGE Demo",
+        barbershopName: "Barbería Demo",
         weekLabel:     "14 abr – 20 abr",
         totalCitas:    42,
         totalIngresos: 1_850_000,

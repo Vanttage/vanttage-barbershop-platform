@@ -5,7 +5,7 @@ import { GOOGLE_PENDING_PREFIX } from "@/src/lib/googleAuth";
 import { prisma } from "@/src/lib/prisma";
 import { CompleteGoogleRegistrationSchema, validateBody } from "@/src/validations";
 import { rateLimit, rateLimitResponse } from "@/src/lib/rateLimit";
-import { createTenantWithOwner } from "@/src/services/tenantOnboarding";
+import { createTenantWithOwner, sendWelcomeEmailSafely } from "@/src/services/tenantOnboarding";
 
 /**
  * Segundo paso de "Continuar con Google" en /register: la sesión ya existe
@@ -66,6 +66,13 @@ export async function POST(request: NextRequest) {
     phone,
     instagram,
     plan,
+  });
+
+  await sendWelcomeEmailSafely({
+    email: result.user.email,
+    ownerName: result.user.name,
+    tenantName: result.tenant.name,
+    tenantSlug: result.tenant.slug,
   });
 
   return NextResponse.json(

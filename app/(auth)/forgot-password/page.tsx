@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
             onChange={(event) => setEmail(event.target.value)}
             required
             className="w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-gold-border"
-            placeholder="superadmin@vanttage.app"
+            placeholder="tu@correo.com"
           />
         </div>
 

@@ -1,4 +1,5 @@
 import { prisma } from "@/src/lib/prisma";
+import { sendWelcomeEmail } from "@/src/lib/email";
 
 const DEFAULT_SERVICE_CATEGORIES = [
   {
@@ -158,4 +159,27 @@ export async function createTenantWithOwner(input: CreateTenantWithOwnerInput) {
 
     return { tenant, barbershop, user };
   });
+}
+
+/**
+ * Envía el correo de bienvenida — separado de createTenantWithOwner() porque
+ * si el envío falla, NO debe tumbar el registro (la cuenta ya quedó creada
+ * en la transacción de arriba). Llamar despues de crear la cuenta.
+ */
+export async function sendWelcomeEmailSafely(params: {
+  email: string;
+  ownerName: string;
+  tenantName: string;
+  tenantSlug: string;
+}) {
+  const result = await sendWelcomeEmail({
+    to: params.email,
+    ownerName: params.ownerName,
+    barbershopName: params.tenantName,
+    tenantSlug: params.tenantSlug,
+  }).catch((err) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
+
+  if (!result.ok) {
+    console.error("[register] No se pudo enviar el correo de bienvenida:", result.error);
+  }
 }
