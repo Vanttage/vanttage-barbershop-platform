@@ -107,7 +107,11 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
   const [form, setForm] = useState({ name: "", phone: "", email: "" });
   const [confirmedClientId, setConfirmedClientId] = useState<string | null>(null);
   const [telegramLoading, setTelegramLoading] = useState(false);
-  const [telegramLinked, setTelegramLinked] = useState(false);
+  // true si el cliente YA tenia Telegram vinculado desde una reserva anterior
+  // (mismo telefono) — en ese caso no tiene sentido invitarlo de nuevo.
+  const [telegramAlreadyLinked, setTelegramAlreadyLinked] = useState(false);
+  // true justo despues de que toca "Recibir por Telegram" en ESTA reserva.
+  const [telegramJustLinked, setTelegramJustLinked] = useState(false);
   const [telegramError, setTelegramError] = useState("");
 
   // Build query string so all API calls carry the tenant slug explicitly.
@@ -163,7 +167,8 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
     setError("");
     setForm({ name: "", phone: "", email: "" });
     setConfirmedClientId(null);
-    setTelegramLinked(false);
+    setTelegramAlreadyLinked(false);
+    setTelegramJustLinked(false);
   };
 
   const handleConfirm = async () => {
@@ -208,6 +213,9 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
       return;
     }
     setConfirmedClientId(created?.clientId ?? null);
+    // Si el telefono ya coincide con un cliente que vinculo Telegram en una
+    // reserva anterior, no tiene sentido volver a mostrarle la invitacion.
+    setTelegramAlreadyLinked(Boolean(created?.client?.telegramChatId));
     setStep("confirmado");
   };
 
@@ -225,7 +233,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
       setTelegramError("No disponible por ahora. Intenta más tarde.");
       return;
     }
-    setTelegramLinked(true);
+    setTelegramJustLinked(true);
     // window.open() aquí sería bloqueado por el navegador — al llamarse
     // después de un await ya no cuenta como "click directo del usuario"
     // para las reglas anti-popup (falla sobre todo en móvil/Safari).
@@ -293,7 +301,14 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
 
           {confirmedClientId && (
             <div className="bg-[#111113] border border-white/[0.06] rounded-2xl p-5 text-left mb-6">
-              {telegramLinked ? (
+              {telegramAlreadyLinked ? (
+                <p className="flex items-center gap-2 text-[13px] text-emerald-400">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Ya recibes tus recordatorios por Telegram.
+                </p>
+              ) : telegramJustLinked ? (
                 <p className="flex items-center gap-2 text-[13px] text-emerald-400">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <polyline points="20 6 9 17 4 12" />

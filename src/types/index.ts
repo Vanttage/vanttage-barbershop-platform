@@ -81,6 +81,7 @@ export interface ClientBasic {
   name: string;
   phone: string;
   email: string | null;
+  telegramChatId?: string | null;
 }
 
 export interface DashboardMetric {
