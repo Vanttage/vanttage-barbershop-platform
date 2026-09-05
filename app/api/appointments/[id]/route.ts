@@ -6,6 +6,13 @@ import { getTenantContext } from "@/src/lib/tenant";
 import { UpdateAppointmentSchema, validateBody } from "@/src/validations";
 import { invalidateByPrefix } from "@/src/lib/apiCache";
 import { checkBarberSchedule, checkSlotAvailability } from "@/src/services/appointments.service";
+import {
+  buildTelegramCancelledMessage,
+  buildTelegramCompletedMessage,
+  buildTelegramRescheduledMessage,
+  isTelegramConfigured,
+  sendTelegramMessage,
+} from "@/src/lib/telegram";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -63,14 +70,20 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
-  const appointment = await prisma.appointment.findFirst({
-    where: {
-      id,
-      tenantId: ctx.tenantId,
-      barbershopId: ctx.barbershopId,
-    },
-    include: { service: true, client: { select: { id: true } } },
-  });
+  const [appointment, tenant] = await Promise.all([
+    prisma.appointment.findFirst({
+      where: {
+        id,
+        tenantId: ctx.tenantId,
+        barbershopId: ctx.barbershopId,
+      },
+      include: { service: true, client: { select: { id: true } } },
+    }),
+    prisma.tenant.findUnique({
+      where: { id: ctx.tenantId },
+      select: { name: true, telegramEnabled: true },
+    }),
+  ]);
 
   if (!appointment) {
     return NextResponse.json({ error: "Cita no encontrada" }, { status: 404 });
@@ -287,6 +300,41 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     // Invalidar cache del dashboard para que refleje el cambio
     invalidateByPrefix(`dashboard:${ctx.barbershopId}`);
 
+    if (isTelegramConfigured() && tenant?.telegramEnabled && updated.client.telegramChatId) {
+      const chatId = updated.client.telegramChatId;
+      const tenantName = tenant.name;
+
+      if (isReschedule) {
+        await sendTelegramMessage({
+          chatId,
+          text: buildTelegramRescheduledMessage({
+            clientName: updated.client.name,
+            barberName: updated.barber.name,
+            serviceName: updated.service.name,
+            startsAt: updated.startsAt,
+            tenantName,
+          }),
+        });
+      } else if (statusFields.status === "cancelled") {
+        await sendTelegramMessage({
+          chatId,
+          text: buildTelegramCancelledMessage({
+            clientName: updated.client.name,
+            startsAt: updated.startsAt,
+            tenantName,
+          }),
+        });
+      } else if (isCompleting && !wasAlreadyCompleted) {
+        await sendTelegramMessage({
+          chatId,
+          text: buildTelegramCompletedMessage({
+            clientName: updated.client.name,
+            tenantName,
+          }),
+        });
+      }
+    }
+
     return NextResponse.json({ data: updated });
   } catch (error) {
     if (
@@ -323,6 +371,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       tenantId: ctx.tenantId,
       barbershopId: ctx.barbershopId,
     },
+    include: { client: { select: { name: true, telegramChatId: true } } },
   });
 
   if (!appointment) {
@@ -353,6 +402,24 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
 
   // Invalidar cache del dashboard
   invalidateByPrefix(`dashboard:${ctx.barbershopId}`);
+
+  if (isTelegramConfigured() && appointment.client.telegramChatId) {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: ctx.tenantId },
+      select: { name: true, telegramEnabled: true },
+    });
+
+    if (tenant?.telegramEnabled) {
+      await sendTelegramMessage({
+        chatId: appointment.client.telegramChatId,
+        text: buildTelegramCancelledMessage({
+          clientName: appointment.client.name,
+          startsAt: cancelled.startsAt,
+          tenantName: tenant.name,
+        }),
+      });
+    }
+  }
 
   return NextResponse.json({ data: cancelled });
 }

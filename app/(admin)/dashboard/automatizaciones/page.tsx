@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, MessageCircle, Clock, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Mail, Send, Clock, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
 import Header from "@/src/components/admin/dashboard/Header";
 import { useApi, apiCall } from "@/src/hooks/useApi";
 import type { Plan } from "@/src/types";
@@ -14,7 +14,7 @@ interface AutomationMeta {
   name: string;
   description: string;
   trigger: string;
-  channel: "whatsapp" | "email";
+  channel: "telegram" | "email";
   minPlan: Plan;
 }
 
@@ -24,15 +24,15 @@ const AUTOMATIONS: AutomationMeta[] = [
     name: "Confirmación de cita",
     description: "Mensaje automático al confirmar una reserva con todos los detalles.",
     trigger: "Al crear la cita",
-    channel: "whatsapp",
+    channel: "telegram",
     minPlan: "basico",
   },
   {
     key: "autoReminder24h",
     name: "Recordatorio 24 horas",
-    description: "¡Mañana tienes cita! con opción de confirmar o cancelar respondiendo.",
+    description: "¡Mañana tienes cita! con los detalles del servicio y el barbero.",
     trigger: "24h antes de la cita",
-    channel: "whatsapp",
+    channel: "telegram",
     minPlan: "basico",
   },
   {
@@ -40,23 +40,15 @@ const AUTOMATIONS: AutomationMeta[] = [
     name: "Recordatorio 1 hora",
     description: "Aviso final con la dirección de la barbería incluida.",
     trigger: "1h antes de la cita",
-    channel: "whatsapp",
+    channel: "telegram",
     minPlan: "basico",
-  },
-  {
-    key: "autoReviewRequest",
-    name: "Solicitud de reseña",
-    description: "Pide una reseña en Google Maps 2h después del servicio.",
-    trigger: "2h tras completar la cita",
-    channel: "whatsapp",
-    minPlan: "pro",
   },
   {
     key: "autoReactivacion",
     name: "Reactivación de clientes",
     description: "¡Te echamos de menos! con descuento para clientes sin cita en 30 días.",
     trigger: "Cada lunes · clientes inactivos +30 días",
-    channel: "whatsapp",
+    channel: "telegram",
     minPlan: "pro",
   },
   {
@@ -78,12 +70,12 @@ function planAllows(tenantPlan: Plan, required: Plan) {
 
 // ── Channel badge ─────────────────────────────────────────────────────────────
 
-function ChannelBadge({ channel }: { channel: "whatsapp" | "email" }) {
-  if (channel === "whatsapp") {
+function ChannelBadge({ channel }: { channel: "telegram" | "email" }) {
+  if (channel === "telegram") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[10.5px] font-medium text-emerald-400">
-        <MessageCircle size={10} />
-        WhatsApp
+      <span className="inline-flex items-center gap-1 rounded-full border border-[#229ED9]/25 bg-[#229ED9]/10 px-2 py-0.5 text-[10.5px] font-medium text-[#5fc4ec]">
+        <Send size={10} />
+        Telegram
       </span>
     );
   }
@@ -274,8 +266,8 @@ export default function AutomatizacionesPage() {
           <AlertCircle size={16} className="flex-shrink-0 text-gold" />
           <p className="text-[12.5px] text-gold-light">
             Las automatizaciones se ejecutan automáticamente vía{" "}
-            <strong className="font-medium">Meta Cloud API</strong> (WhatsApp) y{" "}
-            <strong className="font-medium">Resend</strong> (Email). Gratis hasta 1 000 conversaciones/mes en WhatsApp.
+            <strong className="font-medium">Telegram</strong> y{" "}
+            <strong className="font-medium">Resend</strong> (Email) — gratis, sin límite de conversaciones.
           </p>
         </div>
 

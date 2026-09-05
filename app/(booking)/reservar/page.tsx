@@ -105,6 +105,9 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "" });
+  const [confirmedClientId, setConfirmedClientId] = useState<string | null>(null);
+  const [telegramLoading, setTelegramLoading] = useState(false);
+  const [telegramLinked, setTelegramLinked] = useState(false);
 
   // Build query string so all API calls carry the tenant slug explicitly.
   // This bypasses any cookie/header dependency — works reliably on all devices.
@@ -158,6 +161,8 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
     setSelectedTime(null);
     setError("");
     setForm({ name: "", phone: "", email: "" });
+    setConfirmedClientId(null);
+    setTelegramLinked(false);
   };
 
   const handleConfirm = async () => {
@@ -183,7 +188,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
       return;
     }
 
-    const { error: apiError } = await apiCall<AppointmentWithRelations>(
+    const { data: created, error: apiError } = await apiCall<AppointmentWithRelations>(
       `/api/appointments${qs}`,
       "POST",
       {
@@ -201,7 +206,22 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
       setError(apiError);
       return;
     }
+    setConfirmedClientId(created?.clientId ?? null);
     setStep("confirmado");
+  };
+
+  const handleTelegramOptIn = async () => {
+    if (!confirmedClientId) return;
+    setTelegramLoading(true);
+    const { data, error: linkError } = await apiCall<{ telegramUrl: string }>(
+      "/api/public/telegram-link",
+      "POST",
+      { clientId: confirmedClientId },
+    );
+    setTelegramLoading(false);
+    if (linkError || !data) return;
+    setTelegramLinked(true);
+    window.open(data.telegramUrl, "_blank", "noopener,noreferrer");
   };
 
   if (step === "confirmado") {
@@ -233,8 +253,6 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
           <p className="text-[14px] text-zinc-500 mb-8 leading-relaxed">
             Hola <span className="text-zinc-300 font-medium">{form.name}</span>,
             tu cita está lista.
-            <br />
-            Recibirás confirmación por WhatsApp.
           </p>
           <div className="bg-[#111113] border border-white/[0.06] rounded-2xl p-5 text-left mb-6 space-y-3">
             {[
@@ -263,6 +281,39 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
               </div>
             ))}
           </div>
+
+          {confirmedClientId && process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME && (
+            <div className="bg-[#111113] border border-white/[0.06] rounded-2xl p-5 text-left mb-6">
+              {telegramLinked ? (
+                <p className="flex items-center gap-2 text-[13px] text-emerald-400">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Abre Telegram y toca "Vincular mi cuenta" para terminar.
+                </p>
+              ) : (
+                <>
+                  <p className="text-[13px] text-zinc-300 mb-1 font-medium">
+                    ¿Quieres recibir recordatorios de tu cita?
+                  </p>
+                  <p className="text-[12px] text-zinc-500 mb-4">
+                    Te avisamos 24h y 1h antes, y si algo cambia.
+                  </p>
+                  <button
+                    onClick={handleTelegramOptIn}
+                    disabled={telegramLoading}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#229ED9]/10 border border-[#229ED9]/30 text-[13.5px] font-medium text-[#5fc4ec] hover:bg-[#229ED9]/[0.18] transition-all disabled:opacity-50"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 8.16c-.18 1.897-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.242-1.865-.44-.751-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.14.121.098.153.23.174.324.021.093.036.293.019.454z" />
+                    </svg>
+                    {telegramLoading ? "Abriendo Telegram..." : "🔔 Recibir por Telegram"}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
           <button
             onClick={reset}
             className="w-full py-3.5 rounded-xl bg-gold-subtle border border-gold-border text-[14px] font-medium text-gold-light hover:bg-[rgba(201,168,76,0.18)] transition-all"
@@ -589,7 +640,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                 },
                 {
                   key: "phone",
-                  label: "WhatsApp",
+                  label: "Teléfono",
                   placeholder: "+57 300 000 0000",
                   type: "tel",
                 },
@@ -660,7 +711,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
               )}
             </button>
             <p className="text-[11px] text-zinc-700 text-center mt-3">
-              Al confirmar aceptas recibir recordatorios por WhatsApp
+              Podrás activar recordatorios por Telegram al confirmar tu cita
             </p>
             <button
               onClick={() => setStep("fecha")}

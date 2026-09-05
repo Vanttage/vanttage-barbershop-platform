@@ -165,7 +165,7 @@ export default function PerfilPage() {
 
               <div>
                 <label className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                  <Phone size={14} /> Teléfono / WhatsApp
+                  <Phone size={14} /> Teléfono
                 </label>
                 <input
                   type="tel"

@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { runReminders }      from "@/src/jobs/reminders";
 import { runReactivation }   from "@/src/jobs/reactivation";
 import { runWeeklyReport }   from "@/src/jobs/weekly-report";
-import { isTwilioConfigured } from "@/src/lib/whatsapp";
+import { isTelegramConfigured } from "@/src/lib/telegram";
 
 function isAuthorized(req: NextRequest): boolean {
   return req.headers.get("authorization") === `Bearer ${process.env.CRON_SECRET}`;
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       message: "Pasa ?job=<nombre> para ejecutar un job",
       available_jobs: VALID_JOBS,
       system_status: {
-        twilio:   isTwilioConfigured(),
+        telegram: isTelegramConfigured(),
         resend:   Boolean(process.env.RESEND_API_KEY),
         upstash:  Boolean(process.env.UPSTASH_REDIS_REST_URL),
         sentry:   Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN),

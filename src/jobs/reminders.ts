@@ -1,24 +1,26 @@
 // ─────────────────────────────────────────────────────────────────────────────
 //  VANTTAGE · src/jobs/reminders.ts
 //
-//  Cron job: recordatorios automáticos por WhatsApp (Twilio).
+//  Cron job: recordatorios automáticos por Telegram.
 //  Se ejecuta cada hora desde /api/cron/reminders (Vercel Cron).
 //
 //  Lógica:
 //  - Busca citas que empiezan en las próximas 24h ± 30min → recordatorio 24h
 //  - Busca citas que empiezan en la próxima 1h ± 15min   → recordatorio 1h
 //  - Busca citas completadas hace 1.5–2.5h sin reseña    → solicitud reseña
-//  Solo envía si el tenant tiene el toggle correspondiente activo.
+//  Solo envía si el tenant tiene el toggle correspondiente activo Y el
+//  cliente vinculó su Telegram — si no lo vinculó, simplemente no recibe
+//  nada por este canal (no hay fallback).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { prisma } from "@/src/lib/prisma";
 import {
-  sendWhatsAppText,
-  isTwilioConfigured,
-  buildReminder24hMessage,
-  buildReminder1hMessage,
-  buildReviewRequestMessage,
-} from "@/src/lib/whatsapp";
+  sendTelegramMessage,
+  isTelegramConfigured,
+  buildTelegramReminder24hMessage,
+  buildTelegramReminder1hMessage,
+  buildTelegramReviewRequestMessage,
+} from "@/src/lib/telegram";
 
 interface ReminderResult {
   appointmentId: string;
@@ -35,8 +37,8 @@ export async function runReminders(): Promise<{
 }> {
   const results: ReminderResult[] = [];
 
-  if (!isTwilioConfigured()) {
-    console.warn("[reminders] Twilio no configurado — saltando ejecución.");
+  if (!isTelegramConfigured()) {
+    console.warn("[reminders] Telegram no configurado — saltando ejecución.");
     return { processed: 0, sent: 0, failed: 0, results };
   }
 
@@ -53,28 +55,26 @@ export async function runReminders(): Promise<{
       status: { in: ["pending", "confirmed"] },
       reminder24hSentAt: null,
       startsAt: { gte: h24Start, lte: h24End },
-      tenant: { autoReminder24h: true },
+      tenant: { autoReminder24h: true, telegramEnabled: true },
+      client: { telegramChatId: { not: null } },
     },
     include: {
-      tenant: true,
-      barber: true,
-      client: true,
-      service: true,
+      tenant: { select: { name: true } },
+      barber: { select: { name: true } },
+      service: { select: { name: true } },
+      client: { select: { name: true, telegramChatId: true } },
     },
   });
 
   for (const appt of appts24h) {
-    if (!appt.client.phone) continue;
-
-    const text = buildReminder24hMessage({
+    const text = buildTelegramReminder24hMessage({
       clientName:  appt.client.name,
       barberName:  appt.barber.name,
       serviceName: appt.service.name,
       startsAt:    appt.startsAt,
       tenantName:  appt.tenant.name,
     });
-
-    const result = await sendWhatsAppText({ to: appt.client.phone, text });
+    const result = await sendTelegramMessage({ chatId: appt.client.telegramChatId!, text });
     results.push({ appointmentId: appt.id, type: "24h", ...result });
 
     if (result.success) {
@@ -83,9 +83,6 @@ export async function runReminders(): Promise<{
         data: { reminder24hSentAt: new Date() },
       });
     }
-
-    // Pausa entre envíos para respetar el rate limit de Twilio
-    await new Promise((r) => setTimeout(r, 120));
   }
 
   // ── Recordatorio 1h ───────────────────────────────────────────────────────
@@ -99,27 +96,25 @@ export async function runReminders(): Promise<{
       status: { in: ["pending", "confirmed"] },
       reminder1hSentAt: null,
       startsAt: { gte: h1Start, lte: h1End },
-      tenant: { autoReminder1h: true },
+      tenant: { autoReminder1h: true, telegramEnabled: true },
+      client: { telegramChatId: { not: null } },
     },
     include: {
-      tenant: { select: { id: true, name: true, address: true, autoReminder1h: true } },
+      tenant: { select: { name: true, address: true } },
       barber: { select: { name: true } },
-      client: { select: { name: true, phone: true } },
+      client: { select: { name: true, telegramChatId: true } },
     },
   });
 
   for (const appt of appts1h) {
-    if (!appt.client.phone) continue;
-
-    const text = buildReminder1hMessage({
+    const text = buildTelegramReminder1hMessage({
       clientName: appt.client.name,
       barberName: appt.barber.name,
       startsAt:   appt.startsAt,
       tenantName: appt.tenant.name,
       address:    appt.tenant.address ?? undefined,
     });
-
-    const result = await sendWhatsAppText({ to: appt.client.phone, text });
+    const result = await sendTelegramMessage({ chatId: appt.client.telegramChatId!, text });
     results.push({ appointmentId: appt.id, type: "1h", ...result });
 
     if (result.success) {
@@ -128,8 +123,6 @@ export async function runReminders(): Promise<{
         data: { reminder1hSentAt: new Date() },
       });
     }
-
-    await new Promise((r) => setTimeout(r, 120));
   }
 
   // ── Solicitud de reseña ───────────────────────────────────────────────────
@@ -143,24 +136,25 @@ export async function runReminders(): Promise<{
       status: "completed",
       reviewRequestSentAt: null,
       endsAt: { gte: reviewStart, lte: reviewEnd },
-      tenant: { autoReviewRequest: true },
+      tenant: { autoReviewRequest: true, telegramEnabled: true },
+      client: { telegramChatId: { not: null } },
     },
     include: {
-      tenant: { select: { id: true, name: true, googlePlaceId: true } },
-      client: { select: { name: true, phone: true } },
+      tenant: { select: { name: true, googlePlaceId: true } },
+      client: { select: { name: true, telegramChatId: true } },
     },
   });
 
   for (const appt of apptsReview) {
-    if (!appt.client.phone || !appt.tenant.googlePlaceId) continue;
+    if (!appt.tenant.googlePlaceId) continue;
 
-    const text = buildReviewRequestMessage({
+    const text = buildTelegramReviewRequestMessage({
       clientName:    appt.client.name,
       tenantName:    appt.tenant.name,
       googlePlaceId: appt.tenant.googlePlaceId,
     });
 
-    const result = await sendWhatsAppText({ to: appt.client.phone, text });
+    const result = await sendTelegramMessage({ chatId: appt.client.telegramChatId!, text });
     results.push({ appointmentId: appt.id, type: "review", ...result });
 
     if (result.success) {
@@ -169,8 +163,6 @@ export async function runReminders(): Promise<{
         data: { reviewRequestSentAt: new Date() },
       });
     }
-
-    await new Promise((r) => setTimeout(r, 120));
   }
 
   const sent   = results.filter((r) => r.success).length;

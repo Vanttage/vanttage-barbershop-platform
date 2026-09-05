@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { requireUserWithRole } from "@/src/lib/authorization";
 import { getTenantContext } from "@/src/lib/tenant";
-import { normalizeColombianPhone } from "@/src/lib/whatsapp";
+import { normalizePhone } from "@/src/lib/phone";
 import {
   ClientsQuerySchema,
   CreateClientSchema,
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
-  const normalizedPhone = normalizeColombianPhone(parsed.data.phone);
+  const normalizedPhone = normalizePhone(parsed.data.phone);
   const existing = await prisma.client.findUnique({
     where: {
       barbershopId_phone: {

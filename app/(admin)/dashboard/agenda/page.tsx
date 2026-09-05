@@ -245,7 +245,7 @@ function NewApptModal({
           {!form.clientId && (
             <div>
               <label className="mb-1.5 block text-[10.5px] uppercase tracking-wider text-zinc-500">
-                WhatsApp
+                Telefono
               </label>
               <input
                 value={form.clientPhone}

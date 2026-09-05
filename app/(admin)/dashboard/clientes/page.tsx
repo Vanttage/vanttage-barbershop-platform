@@ -19,7 +19,6 @@ import {
   TrendingUp,
   UserPlus,
   UserMinus,
-  MessageCircle,
   AlertTriangle,
   ChevronRight,
   ChevronLeft,
@@ -147,7 +146,7 @@ function ClientModal({
             <input value={form.name} onChange={set("name")} placeholder="Juan Perez" className={FIELD_CLASS} />
           </div>
           <div>
-            <label className={LABEL_CLASS}>Telefono / WhatsApp</label>
+            <label className={LABEL_CLASS}>Telefono</label>
             <input value={form.phone} onChange={set("phone")} placeholder="+57 300 000 0000" className={FIELD_CLASS} />
           </div>
           <div>
@@ -399,15 +398,6 @@ function ClientDetailPanel({
             <CalendarCheck size={12} />
             Nueva cita
           </button>
-          <a
-            href={`https://wa.me/${full.phone.replace(/\D/g, "")}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-lg border border-white/[0.07] px-3 py-2 text-[12px] text-zinc-500 transition hover:border-white/[0.14] hover:text-zinc-300"
-          >
-            <MessageCircle size={12} />
-            WhatsApp
-          </a>
         </div>
       </div>
     </div>

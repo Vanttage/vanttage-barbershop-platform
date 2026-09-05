@@ -6,7 +6,7 @@ const features = [
   "Agenda online por barbero y sede",
   "Pagos, historial y clientes frecuentes",
   "Dashboard operativo con metricas de negocio",
-  "Automatizaciones por WhatsApp y correo",
+  "Automatizaciones por Telegram y correo",
 ];
 
 const stats = [

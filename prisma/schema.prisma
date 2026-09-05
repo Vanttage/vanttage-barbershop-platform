@@ -50,6 +50,7 @@ enum PaymentStatus {
 
 enum NotificationChannel {
   whatsapp
+  telegram
   email
   push
 }
@@ -57,7 +58,9 @@ enum NotificationChannel {
 enum NotificationType {
   appointment_confirmed
   appointment_reminder
+  appointment_rescheduled
   appointment_cancelled
+  appointment_completed
   payment_received
   marketing
 }
@@ -105,6 +108,9 @@ model Tenant {
   autoReviewRequest   Boolean   @default(false)
   autoReactivacion    Boolean   @default(false)
   autoWeeklyReport    Boolean   @default(true)
+  // Interruptor maestro del canal Telegram — independiente de los toggles
+  // de arriba, que solo controlan cuáles eventos WhatsApp automatiza.
+  telegramEnabled     Boolean   @default(true)
 
   primaryBarbershop   Barbershop?            @relation("PrimaryBarbershop", fields: [primaryBarbershopId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   barbershops         Barbershop[]           @relation("TenantBarbershops")
@@ -311,6 +317,16 @@ model Client {
   active       Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  // ── Telegram ──────────────────────────────────────────────────────
+  // chatId queda null hasta que el cliente vincula su cuenta (ver
+  // src/lib/telegram.ts). linkToken es de un solo uso y expira a los 15
+  // minutos — se genera al mostrar el botón "Recibir por Telegram" en la
+  // pantalla de confirmación de /reservar.
+  telegramChatId             String?   @unique
+  telegramLinkToken          String?   @unique
+  telegramLinkTokenExpiresAt DateTime?
+  telegramLinkedAt           DateTime?
 
   tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   barbershop    Barbershop       @relation(fields: [barbershopId], references: [id], onDelete: Cascade)

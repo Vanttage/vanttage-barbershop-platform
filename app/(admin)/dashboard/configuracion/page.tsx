@@ -6,7 +6,6 @@ import { apiCall, useApi } from "@/src/hooks/useApi";
 import {
   Building2,
   Phone,
-  MessageCircle,
   AtSign,
   MapPin,
   Clock,
@@ -20,7 +19,22 @@ import {
   Save,
   AlertTriangle,
   Globe,
+  Send,
+  Users,
 } from "lucide-react";
+
+type TelegramClient = {
+  id: string;
+  name: string;
+  phone: string;
+  telegramLinkedAt: string | null;
+};
+
+type TelegramSettings = {
+  serviceConfigured: boolean;
+  enabled: boolean;
+  connectedClients: TelegramClient[];
+};
 
 type SettingsData = {
   tenantName: string;
@@ -51,7 +65,6 @@ type FormData = {
   city: string;
   country: string;
   phone: string;
-  whatsapp: string;
   instagram: string;
   openingTime: string;
   closingTime: string;
@@ -74,6 +87,35 @@ export default function ConfiguracionPage() {
   const [copied, setCopied] = useState(false);
   const [qrDownloading, setQrDownloading] = useState(false);
 
+  const {
+    data: telegram,
+    loading: telegramLoading,
+    refetch: refetchTelegram,
+  } = useApi<TelegramSettings>("/api/telegram/settings");
+  const [togglingTelegram, setTogglingTelegram] = useState(false);
+  const [testingTelegram, setTestingTelegram] = useState(false);
+  const [telegramTestMsg, setTelegramTestMsg] = useState("");
+
+  const toggleTelegram = async () => {
+    if (!telegram) return;
+    setTogglingTelegram(true);
+    await apiCall("/api/telegram/settings", "PATCH", { enabled: !telegram.enabled });
+    setTogglingTelegram(false);
+    refetchTelegram();
+  };
+
+  const testTelegram = async () => {
+    setTestingTelegram(true);
+    setTelegramTestMsg("");
+    const { data: result, error: testError } = await apiCall<{ sentTo: string }>(
+      "/api/telegram/test",
+      "POST",
+    );
+    setTestingTelegram(false);
+    setTelegramTestMsg(testError ? testError : `Enviado a ${result?.sentTo}`);
+    setTimeout(() => setTelegramTestMsg(""), 4000);
+  };
+
   const [form, setForm] = useState<FormData>({
     tenantName: "",
     barbershopName: "",
@@ -84,7 +126,6 @@ export default function ConfiguracionPage() {
     city: "",
     country: "Colombia",
     phone: "",
-    whatsapp: "",
     instagram: "",
     openingTime: "09:00",
     closingTime: "19:00",
@@ -102,7 +143,6 @@ export default function ConfiguracionPage() {
       city: data.city ?? "",
       country: data.country ?? "Colombia",
       phone: data.phone ?? "",
-      whatsapp: data.whatsapp ?? "",
       instagram: data.instagram ?? "",
       openingTime: data.openingTime ?? "09:00",
       closingTime: data.closingTime ?? "19:00",
@@ -195,7 +235,7 @@ export default function ConfiguracionPage() {
 
   const checklist = [
     { label: "Nombre de barberia configurado", done: Boolean(form.barbershopName) },
-    { label: "Numero de WhatsApp registrado", done: Boolean(form.whatsapp) },
+    { label: "Telefono de contacto registrado", done: Boolean(form.phone) },
     { label: "Horario de atencion definido", done: Boolean(form.openingTime && form.closingTime) },
     { label: "Direccion o ciudad visible", done: Boolean(form.address || form.city) },
     { label: "Instagram conectado", done: Boolean(form.instagram) },
@@ -283,13 +323,6 @@ export default function ConfiguracionPage() {
                     Telefono
                   </label>
                   <input value={form.phone} onChange={set("phone")} placeholder="+57 300 000 0000" className={FIELD_CLASS} />
-                </div>
-                <div>
-                  <label className={LABEL_CLASS}>
-                    <InputIcon><MessageCircle size={11} /></InputIcon>
-                    WhatsApp
-                  </label>
-                  <input value={form.whatsapp} onChange={set("whatsapp")} placeholder="+57 300 000 0000" className={FIELD_CLASS} />
                 </div>
                 <div>
                   <label className={LABEL_CLASS}>
@@ -393,6 +426,100 @@ export default function ConfiguracionPage() {
               </div>
             </section>
 
+            {/* Telegram */}
+            <section className="rounded-2xl border border-white/[0.05] bg-[#111113] p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-100">
+                  <Send size={14} className="text-zinc-600" />
+                  Telegram
+                </h3>
+                {telegram && (
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10.5px] font-medium ${
+                      telegram.serviceConfigured
+                        ? "border border-emerald-400/25 bg-emerald-400/10 text-emerald-400"
+                        : "border border-zinc-600/40 bg-zinc-800/60 text-zinc-500"
+                    }`}
+                  >
+                    {telegram.serviceConfigured ? "Servicio activo" : "No configurado"}
+                  </span>
+                )}
+              </div>
+
+              {telegramLoading ? (
+                <div className="h-24 animate-pulse rounded-xl bg-zinc-800/40" />
+              ) : !telegram?.serviceConfigured ? (
+                <p className="text-xs text-zinc-500">
+                  El bot de Telegram todavía no está configurado en NAVA. Cuando esté listo,
+                  tus clientes podrán recibir recordatorios automáticos aquí.
+                </p>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-zinc-900/60 px-4 py-3">
+                    <div>
+                      <p className="text-[12.5px] font-medium text-zinc-200">
+                        Notificaciones
+                      </p>
+                      <p className="text-[11px] text-zinc-500">
+                        {telegram.enabled ? "Activas para tus clientes" : "Desactivadas"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={toggleTelegram}
+                      disabled={togglingTelegram}
+                      className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+                        telegram.enabled ? "bg-emerald-500" : "bg-zinc-700"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                          telegram.enabled ? "translate-x-5" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="mb-2 flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-zinc-600">
+                      <Users size={11} />
+                      Clientes conectados ({telegram.connectedClients.length})
+                    </p>
+                    {telegram.connectedClients.length === 0 ? (
+                      <p className="text-xs text-zinc-600">
+                        Aún nadie ha vinculado Telegram. Aparecerán aquí cuando lo hagan desde
+                        la confirmación de su reserva.
+                      </p>
+                    ) : (
+                      <div className="max-h-40 space-y-1.5 overflow-y-auto">
+                        {telegram.connectedClients.map((c) => (
+                          <div
+                            key={c.id}
+                            className="flex items-center justify-between rounded-lg bg-zinc-900/60 px-3 py-2 text-[12px]"
+                          >
+                            <span className="text-zinc-300">{c.name}</span>
+                            <span className="text-zinc-600">{c.phone}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={testTelegram}
+                    disabled={testingTelegram || telegram.connectedClients.length === 0}
+                    className="mt-4 w-full rounded-xl border border-white/[0.06] bg-zinc-800/60 px-3 py-2.5 text-[12.5px] font-medium text-zinc-300 transition hover:bg-zinc-700/60 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {testingTelegram ? "Enviando..." : "Probar notificación"}
+                  </button>
+                  {telegramTestMsg && (
+                    <p className="mt-2 text-center text-[11px] text-zinc-500">{telegramTestMsg}</p>
+                  )}
+                </>
+              )}
+            </section>
+
             {/* Booking URL + QR */}
             <section className="rounded-2xl border border-white/[0.05] bg-[#111113] p-5">
               <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-zinc-100">
@@ -400,7 +527,7 @@ export default function ConfiguracionPage() {
                 Link de reservas
               </h3>
               <p className="mb-4 text-xs text-zinc-500">
-                Comparte el link o el QR en tu bio, WhatsApp o imprímelo en tu local.
+                Comparte el link o el QR en tus redes o imprímelo en tu local.
               </p>
 
               {/* URL row */}

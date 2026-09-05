@@ -19,7 +19,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
-    "db:superadmin": "tsx scripts/create-superadmin.ts"
+    "db:superadmin": "tsx scripts/create-superadmin.ts",
+    "telegram:setup": "tsx scripts/telegram-setup.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -33,7 +34,6 @@
     "react": "^18",
     "react-dom": "^18",
     "resend": "^6.12.0",
-    "twilio": "^5.13.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

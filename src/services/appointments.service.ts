@@ -1,11 +1,11 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
+import { normalizePhone } from "@/src/lib/phone";
 import {
-  buildConfirmationMessage,
-  normalizePhone,
-  sendWhatsAppText,
-  isTwilioConfigured,
-} from "@/src/lib/whatsapp";
+  buildTelegramConfirmationMessage,
+  isTelegramConfigured,
+  sendTelegramMessage,
+} from "@/src/lib/telegram";
 import type { CreateAppointmentDTO, DashboardStats } from "@/src/types";
 
 // Cliente Prisma normal o de una transacción — checkSlotAvailability se usa
@@ -144,6 +144,7 @@ export async function createAppointment(
         name: true,
         address: true,
         autoConfirmacion: true,
+        telegramEnabled: true,
       },
     }),
     prisma.barbershop.findFirst({
@@ -262,7 +263,7 @@ export async function createAppointment(
       include: {
         barber:  { select: { id: true, name: true } },
         service: { select: { id: true, name: true, durationMin: true } },
-        client:  { select: { id: true, name: true, phone: true } },
+        client:  { select: { id: true, name: true, phone: true, telegramChatId: true } },
       },
     });
 
@@ -286,8 +287,16 @@ export async function createAppointment(
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
 
-  if (tenant.autoConfirmacion && isTwilioConfigured() && appointment.client.phone) {
-    const message = buildConfirmationMessage({
+  // Telegram solo aplica a clientes que ya vincularon su cuenta en una
+  // reserva anterior — uno recién creado todavía no tiene chatId (el botón
+  // "Recibir por Telegram" se muestra DESPUÉS de esta reserva).
+  if (
+    tenant.autoConfirmacion &&
+    tenant.telegramEnabled &&
+    isTelegramConfigured() &&
+    appointment.client.telegramChatId
+  ) {
+    const message = buildTelegramConfirmationMessage({
       clientName: appointment.client.name,
       barberName: appointment.barber.name,
       serviceName: appointment.service.name,
@@ -296,8 +305,8 @@ export async function createAppointment(
       address: barbershop.address ?? tenant.address ?? undefined,
     });
 
-    const waResult = await sendWhatsAppText({
-      to: appointment.client.phone,
+    const tgResult = await sendTelegramMessage({
+      chatId: appointment.client.telegramChatId,
       text: message,
     });
 
@@ -307,18 +316,18 @@ export async function createAppointment(
         barbershopId: context.barbershopId,
         appointmentId: appointment.id,
         clientId: appointment.client.id,
-        channel: "whatsapp",
+        channel: "telegram",
         type: "appointment_confirmed",
-        status: waResult.success ? "sent" : "failed",
-        recipient: appointment.client.phone,
+        status: tgResult.success ? "sent" : "failed",
+        recipient: appointment.client.telegramChatId,
         title: "Confirmacion de cita",
         message,
-        errorMessage: waResult.error,
-        sentAt: waResult.success ? new Date() : null,
+        errorMessage: tgResult.error,
+        sentAt: tgResult.success ? new Date() : null,
       },
     });
 
-    if (waResult.success) {
+    if (tgResult.success) {
       await prisma.appointment.update({
         where: { id: appointment.id },
         data: { confirmationSentAt: new Date() },
