@@ -226,7 +226,11 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
       return;
     }
     setTelegramLinked(true);
-    window.open(data.telegramUrl, "_blank", "noopener,noreferrer");
+    // window.open() aquí sería bloqueado por el navegador — al llamarse
+    // después de un await ya no cuenta como "click directo del usuario"
+    // para las reglas anti-popup (falla sobre todo en móvil/Safari).
+    // location.href no es un popup, así que no lo bloquean.
+    window.location.href = data.telegramUrl;
   };
 
   if (step === "confirmado") {
