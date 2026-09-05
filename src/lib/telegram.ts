@@ -98,17 +98,24 @@ export async function sendTelegramMessage({
 
 // ── Mensajes predefinidos NAVA ────────────────────────────────────────────────
 
+// Sin `timeZone` explícito, Intl usa la zona horaria del servidor — en
+// Vercel eso es UTC, no Bogotá. Sin esto, una cita a las 11:30am (16:30
+// UTC) se mostraba como "4:30 p.m." en el mensaje de Telegram.
+const BOGOTA_TZ = "America/Bogota";
+
 function formatFechaHora(startsAt: Date | string) {
   const d = new Date(startsAt);
   const fecha = new Intl.DateTimeFormat("es-CO", {
     weekday: "long",
     day: "numeric",
     month: "long",
+    timeZone: BOGOTA_TZ,
   }).format(d);
   const hora = new Intl.DateTimeFormat("es-CO", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
+    timeZone: BOGOTA_TZ,
   }).format(d);
   return { fecha, hora };
 }

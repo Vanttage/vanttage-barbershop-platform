@@ -89,13 +89,16 @@ export async function runWeeklyReport(): Promise<{
 
       // ── Arma el mensaje ─────────────────────────────────────────
 
+      // timeZone explicito: en Vercel el servidor corre en UTC, no Bogota.
       const semana = thisWeek.start.toLocaleDateString("es-CO", {
         day: "numeric",
         month: "short",
+        timeZone: "America/Bogota",
       });
       const semanaFin = thisWeek.end.toLocaleDateString("es-CO", {
         day: "numeric",
         month: "short",
+        timeZone: "America/Bogota",
       });
 
       // ── Envía el reporte por email (Resend) ──────────────────────
