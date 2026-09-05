@@ -5,7 +5,10 @@
  *
  * Uso:
  *   npm run telegram:setup
+ *   NEXT_PUBLIC_APP_URL=https://tudominio.com npm run telegram:setup
  */
+import "dotenv/config";
+
 async function main() {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
