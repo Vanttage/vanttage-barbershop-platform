@@ -21,6 +21,7 @@ export async function GET() {
       avatarUrl: true,
       role: true,
       createdAt: true,
+      telegramChatId: true,
       tenant: {
         select: { name: true, slug: true, plan: true },
       },

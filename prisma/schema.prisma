@@ -63,6 +63,7 @@ enum NotificationType {
   appointment_completed
   payment_received
   marketing
+  new_booking_alert
 }
 
 enum NotificationStatus {
@@ -191,6 +192,13 @@ model User {
   lastLoginAt         DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
+
+  // ── Telegram (dueño) ──────────────────────────────────────────────
+  // Mismo patron que Client.telegramChatId — el dueño vincula su propio
+  // chat desde Mi Perfil para recibir aviso de cada reserva nueva.
+  telegramChatId             String?   @unique
+  telegramLinkToken          String?   @unique
+  telegramLinkTokenExpiresAt DateTime?
 
   tenant              Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   defaultBarbershop   Barbershop?            @relation("DefaultBarbershopUsers", fields: [defaultBarbershopId], references: [id], onDelete: SetNull)

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/prisma";
 import { requireUserWithRole } from "@/src/lib/authorization";
 import { getTenantContext } from "@/src/lib/tenant";
@@ -83,8 +85,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
+  // Esta misma ruta la usan tanto el booking público (/reservar) como Agenda
+  // en el dashboard — solo avisamos al dueño por Telegram si fue el cliente
+  // quien reservó por su cuenta. Si hay una sesión del dueño de este mismo
+  // tenant, es él creando la cita desde Agenda: ya lo sabe, no hace falta.
+  const session = await getServerSession(authOptions);
+  const notifyOwner = session?.user?.tenantId !== ctx.tenantId;
+
   try {
-    const appointment = await createAppointment(ctx, parsed.data);
+    const appointment = await createAppointment(ctx, parsed.data, { notifyOwner });
     // Invalidar stats del dashboard al crear una cita nueva
     invalidateByPrefix(`dashboard:${ctx.barbershopId}`);
     return NextResponse.json({ data: appointment }, { status: 201 });

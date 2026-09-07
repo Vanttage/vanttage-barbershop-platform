@@ -128,6 +128,33 @@ export function buildTelegramWelcomeMessage(tenantName: string): string {
   );
 }
 
+/** Bienvenida al dueño/barbero cuando vincula su propio Telegram desde Mi Perfil. */
+export function buildTelegramOwnerWelcomeMessage(tenantName: string): string {
+  return (
+    `✅ <b>¡Listo!</b>\n\n` +
+    `Vinculaste tu Telegram a <b>${tenantName}</b> en NAVA. Desde ahora te ` +
+    `avisamos por aquí cada vez que un cliente reserve una cita nueva.`
+  );
+}
+
+/** Aviso al dueño/barbero cuando un cliente reserva desde el booking público. */
+export function buildTelegramNewBookingMessage(params: {
+  clientName: string;
+  clientPhone: string;
+  barberName: string;
+  serviceName: string;
+  startsAt: Date | string;
+}): string {
+  const { fecha, hora } = formatFechaHora(params.startsAt);
+  return (
+    `🆕 <b>Nueva reserva</b>\n\n` +
+    `👤 ${params.clientName} · ${params.clientPhone}\n` +
+    `✂️ ${params.serviceName} con ${params.barberName}\n` +
+    `📅 ${fecha}\n` +
+    `🕐 ${hora}`
+  );
+}
+
 export function buildTelegramConfirmationMessage(params: {
   clientName: string;
   barberName: string;

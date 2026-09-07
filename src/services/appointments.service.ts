@@ -3,6 +3,7 @@ import { prisma } from "@/src/lib/prisma";
 import { normalizePhone } from "@/src/lib/phone";
 import {
   buildTelegramConfirmationMessage,
+  buildTelegramNewBookingMessage,
   isTelegramConfigured,
   sendTelegramMessage,
 } from "@/src/lib/telegram";
@@ -133,7 +134,9 @@ function getWeekRange(baseDate = new Date()) {
 export async function createAppointment(
   context: SchedulerContext,
   dto: CreateAppointmentDTO,
+  options: { notifyOwner?: boolean } = {},
 ) {
+  const { notifyOwner = true } = options;
   // ── Cargar tenant, barbershop, service y barber en paralelo ──────────────
   // Solo se seleccionan los campos realmente necesarios para reducir payload
   const [tenant, barbershop, service, barber] = await Promise.all([
@@ -332,6 +335,50 @@ export async function createAppointment(
         where: { id: appointment.id },
         data: { confirmationSentAt: new Date() },
       });
+    }
+  }
+
+  // Avisa al dueño/barbero que vinculó su Telegram — solo para reservas que
+  // el cliente hizo por su cuenta desde /reservar. Si el dueño la creó él
+  // mismo desde Agenda (notifyOwner: false), ya lo sabe, no hace falta avisarle.
+  if (notifyOwner && tenant.telegramEnabled && isTelegramConfigured()) {
+    const owners = await prisma.user.findMany({
+      where: { tenantId: context.tenantId, telegramChatId: { not: null } },
+      select: { telegramChatId: true },
+    });
+
+    if (owners.length > 0) {
+      const ownerMessage = buildTelegramNewBookingMessage({
+        clientName: appointment.client.name,
+        clientPhone: appointment.client.phone,
+        barberName: appointment.barber.name,
+        serviceName: appointment.service.name,
+        startsAt: appointment.startsAt,
+      });
+
+      for (const owner of owners) {
+        const ownerResult = await sendTelegramMessage({
+          chatId: owner.telegramChatId!,
+          text: ownerMessage,
+        });
+
+        await prisma.notification.create({
+          data: {
+            tenantId: context.tenantId,
+            barbershopId: context.barbershopId,
+            appointmentId: appointment.id,
+            clientId: appointment.client.id,
+            channel: "telegram",
+            type: "new_booking_alert",
+            status: ownerResult.success ? "sent" : "failed",
+            recipient: owner.telegramChatId!,
+            title: "Nueva reserva",
+            message: ownerMessage,
+            errorMessage: ownerResult.error,
+            sentAt: ownerResult.success ? new Date() : null,
+          },
+        });
+      }
     }
   }
 

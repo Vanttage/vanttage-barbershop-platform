@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Mail, Phone, ShieldCheck, User } from "lucide-react";
+import { Check, Mail, Phone, Send, ShieldCheck, User } from "lucide-react";
 import { useApi, apiCall } from "@/src/hooks/useApi";
 import Header from "@/src/components/admin/dashboard/Header";
 import Avatar from "@/src/components/admin/ui/Avatar";
@@ -14,6 +14,7 @@ interface ProfileData {
   avatarUrl: string | null;
   role: string;
   createdAt: string;
+  telegramChatId: string | null;
   tenant: { name: string; slug: string; plan: string } | null;
 }
 
@@ -30,12 +31,41 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function PerfilPage() {
-  const { data: profile, loading } = useApi<ProfileData>("/api/profile");
+  const { data: profile, loading, refetch } = useApi<ProfileData>("/api/profile");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [telegramLoading, setTelegramLoading] = useState(false);
+  const [telegramError, setTelegramError] = useState("");
+
+  async function handleLinkTelegram() {
+    setTelegramLoading(true);
+    setTelegramError("");
+    const { data, error: linkError } = await apiCall<{ telegramUrl: string }>(
+      "/api/profile/telegram-link",
+      "POST",
+    );
+    setTelegramLoading(false);
+    if (linkError || !data) {
+      setTelegramError(linkError ?? "No se pudo generar el enlace.");
+      return;
+    }
+    window.location.href = data.telegramUrl;
+  }
+
+  async function handleUnlinkTelegram() {
+    setTelegramLoading(true);
+    setTelegramError("");
+    const { error: unlinkError } = await apiCall("/api/profile/telegram-link", "DELETE");
+    setTelegramLoading(false);
+    if (unlinkError) {
+      setTelegramError(unlinkError);
+      return;
+    }
+    refetch();
+  }
 
   useEffect(() => {
     if (profile) {
@@ -207,33 +237,87 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          {/* Tenant */}
+          {/* Tenant + Telegram */}
           {profile?.tenant && (
-            <div className="rounded-[26px] border border-white/[0.06] bg-white/[0.035] p-6 sm:p-8">
-              <h3 className="mb-6 text-[16px] font-semibold text-zinc-200">
-                Tu barbería
-              </h3>
+            <div className="space-y-6">
+              <div className="rounded-[26px] border border-white/[0.06] bg-white/[0.035] p-6 sm:p-8">
+                <h3 className="mb-6 text-[16px] font-semibold text-zinc-200">
+                  Tu barbería
+                </h3>
 
-              <div className="space-y-4">
-                {[
-                  { label: "Nombre", value: profile.tenant.name },
-                  { label: "Slug / URL", value: profile.tenant.slug },
-                  {
-                    label: "Plan activo",
-                    value:
-                      PLAN_LABELS[profile.tenant.plan] ?? profile.tenant.plan,
-                  },
-                ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-black/30 px-4 py-3"
-                  >
-                    <span className="text-[13px] text-zinc-400">{label}</span>
-                    <span className="text-[14px] font-medium text-zinc-200">
-                      {value}
+                <div className="space-y-4">
+                  {[
+                    { label: "Nombre", value: profile.tenant.name },
+                    { label: "Slug / URL", value: profile.tenant.slug },
+                    {
+                      label: "Plan activo",
+                      value:
+                        PLAN_LABELS[profile.tenant.plan] ?? profile.tenant.plan,
+                    },
+                  ].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-black/30 px-4 py-3"
+                    >
+                      <span className="text-[13px] text-zinc-400">{label}</span>
+                      <span className="text-[14px] font-medium text-zinc-200">
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Telegram */}
+              <div className="rounded-[26px] border border-white/[0.06] bg-white/[0.035] p-6 sm:p-8">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 text-[16px] font-semibold text-zinc-200">
+                    <Send size={16} className="text-zinc-500" />
+                    Notificaciones por Telegram
+                  </h3>
+                  {profile.telegramChatId && (
+                    <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300">
+                      Vinculado
                     </span>
-                  </div>
-                ))}
+                  )}
+                </div>
+
+                {profile.telegramChatId ? (
+                  <>
+                    <p className="text-[13.5px] leading-relaxed text-zinc-400">
+                      Te avisamos por Telegram cada vez que un cliente reserve
+                      una cita nueva.
+                    </p>
+                    <button
+                      onClick={handleUnlinkTelegram}
+                      disabled={telegramLoading}
+                      className="mt-4 w-full rounded-xl border border-white/[0.08] bg-black/30 px-4 py-3 text-[13.5px] font-medium text-zinc-300 transition hover:bg-black/50 disabled:opacity-50"
+                    >
+                      {telegramLoading ? "Desvinculando..." : "Desvincular Telegram"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[13.5px] leading-relaxed text-zinc-400">
+                      Vincula tu Telegram para enterarte al instante cuando un
+                      cliente reserve una cita — sin tener que revisar la app.
+                    </p>
+                    <button
+                      onClick={handleLinkTelegram}
+                      disabled={telegramLoading}
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-[13.5px] font-semibold text-black transition hover:bg-emerald-300 disabled:opacity-50"
+                    >
+                      <Send size={14} />
+                      {telegramLoading ? "Generando enlace..." : "Vincular Telegram"}
+                    </button>
+                  </>
+                )}
+
+                {telegramError && (
+                  <p className="mt-3 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-[13px] text-red-300">
+                    {telegramError}
+                  </p>
+                )}
               </div>
             </div>
           )}

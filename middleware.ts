@@ -46,15 +46,6 @@ export async function middleware(request: NextRequest) {
   const realTenantSlug = resolveTenantSlug(host, pathname);
   let tenantSlug = realTenantSlug;
 
-  // Cookie fallback: API calls from path-based booking pages send the cookie
-  // set during the page request, so we can resolve the tenant for /api/* routes.
-  if (!tenantSlug && pathname.startsWith("/api/")) {
-    const cookieSlug = request.cookies.get("tenant-slug")?.value;
-    if (cookieSlug && !RESERVED_SLUGS.has(cookieSlug)) {
-      tenantSlug = cookieSlug;
-    }
-  }
-
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
@@ -62,11 +53,22 @@ export async function middleware(request: NextRequest) {
 
   // Dashboard / API routes accessed from app.vanttagetech.com have no subdomain
   // tenant. Fall back to the tenantSlug stored in the JWT so that getTenantContext()
-  // can resolve the barbershop for the logged-in owner. This must win over the
-  // localhost dev-tenant fallback below — otherwise every logged-in user on
-  // localhost gets routed to VANTTAGE_DEV_TENANT instead of their own tenant.
+  // can resolve the barbershop for the logged-in owner. Esto debe ganarle a la
+  // cookie de abajo — si no, una cookie "tenant-slug" vieja de una visita
+  // anónima anterior (a otro subdominio, o al fallback de dev) puede pisar el
+  // tenant real de una sesión ya logueada y mandarla a /login en bucle.
   if (!tenantSlug && token?.tenantSlug) {
     tenantSlug = token.tenantSlug;
+  }
+
+  // Cookie fallback: API calls from path-based booking pages send the cookie
+  // set during the page request, so we can resolve the tenant for /api/* routes.
+  // Solo aplica sin sesión — una sesión real ya se resolvió arriba.
+  if (!tenantSlug && !token && pathname.startsWith("/api/")) {
+    const cookieSlug = request.cookies.get("tenant-slug")?.value;
+    if (cookieSlug && !RESERVED_SLUGS.has(cookieSlug)) {
+      tenantSlug = cookieSlug;
+    }
   }
 
   // Dev env fallback: only for anonymous/subdomain-less requests on localhost
