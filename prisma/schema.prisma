@@ -201,6 +201,12 @@ model User {
   telegramLinkToken          String?   @unique
   telegramLinkTokenExpiresAt DateTime?
 
+  // ── Impersonación (superadmin) ───────────────────────────────────
+  // Token de un solo uso, de segundos de vida — ver
+  // POST /api/superadmin/tenants/[id]/impersonate.
+  impersonationToken          String?   @unique
+  impersonationTokenExpiresAt DateTime?
+
   tenant              Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   defaultBarbershop   Barbershop?            @relation("DefaultBarbershopUsers", fields: [defaultBarbershopId], references: [id], onDelete: SetNull)
   memberships         BarbershopMembership[]

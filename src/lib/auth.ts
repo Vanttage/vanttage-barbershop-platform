@@ -162,8 +162,52 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Contrasena", type: "password" },
+        impersonationToken: { label: "impersonationToken", type: "text" },
       },
       async authorize(credentials) {
+        // Login "Entrar como" del superadmin — ver
+        // POST /api/superadmin/tenants/[id]/impersonate. Token de un solo
+        // uso y vida cortísima, nunca pasa por verificar contraseña.
+        if (credentials?.impersonationToken) {
+          const target = await prisma.user.findUnique({
+            where: { impersonationToken: credentials.impersonationToken },
+            include: {
+              tenant: { select: { id: true, slug: true, active: true } },
+              defaultBarbershop: { select: { id: true, slug: true, active: true } },
+            },
+          });
+
+          const tokenValid =
+            target &&
+            target.impersonationTokenExpiresAt &&
+            target.impersonationTokenExpiresAt.getTime() > Date.now();
+
+          if (!target || !tokenValid || !target.active) {
+            return null;
+          }
+          if (target.tenant && !target.tenant.active) {
+            return null;
+          }
+
+          // Un solo uso — se invalida apenas se consume, exitosa o no.
+          await prisma.user.update({
+            where: { id: target.id },
+            data: { impersonationToken: null, impersonationTokenExpiresAt: null },
+          });
+
+          return {
+            id: target.id,
+            email: target.email,
+            name: target.name,
+            image: target.avatarUrl ?? null,
+            role: target.role,
+            tenantId: target.tenantId,
+            tenantSlug: target.tenant?.slug ?? null,
+            barbershopId: target.defaultBarbershopId,
+            barbershopSlug: target.defaultBarbershop?.slug ?? null,
+          };
+        }
+
         if (!credentials?.email || !credentials.password) {
           return null;
         }
