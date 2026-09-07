@@ -125,6 +125,17 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {/* FOOTER */}
+          <div className="mt-16 flex items-center justify-center gap-3 text-center text-xs text-zinc-600">
+            <Link href="/terminos-y-condiciones" className="transition hover:text-zinc-400">
+              Términos y condiciones
+            </Link>
+            <span className="text-zinc-800">·</span>
+            <Link href="/politica-de-privacidad" className="transition hover:text-zinc-400">
+              Política de privacidad
+            </Link>
+          </div>
         </div>
       </section>
     </main>

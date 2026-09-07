@@ -40,7 +40,11 @@ function resolveTenantSlug(host: string, pathname: string): string | null {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const host = request.headers.get("host") ?? "";
-  let tenantSlug = resolveTenantSlug(host, pathname);
+  // Tenant resuelto de verdad por subdominio o por /{slug}/reservar en la URL
+  // — a diferencia de tenantSlug (abajo), nunca incluye el fallback de dev.
+  // Se usa para decidir si "/" es la landing o el booking de una barbería.
+  const realTenantSlug = resolveTenantSlug(host, pathname);
+  let tenantSlug = realTenantSlug;
 
   // Cookie fallback: API calls from path-based booking pages send the cookie
   // set during the page request, so we can resolve the tenant for /api/* routes.
@@ -89,7 +93,7 @@ export async function middleware(request: NextRequest) {
     pathname !== GOOGLE_COMPLETE_PATH &&
     AUTH_PATHS.some((path) => pathname.startsWith(path));
 
-  if (tenantSlug && pathname === "/") {
+  if (realTenantSlug && pathname === "/") {
     return NextResponse.redirect(new URL(BOOKING_PATH, request.url));
   }
 

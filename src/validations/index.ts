@@ -193,6 +193,9 @@ export const RegisterSchema = z
     password: z.string().min(8, "Minimo 8 caracteres"),
     confirmPassword: z.string().min(8, "Confirma tu contrasena"),
     name: z.string().min(2).max(100).optional(),
+    acceptedTerms: z.literal(true, {
+      message: "Debes aceptar los terminos y condiciones",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Las contrasenas no coinciden",
@@ -213,6 +216,9 @@ export const CompleteGoogleRegistrationSchema = z.object({
   country: z.string().max(80).optional(),
   instagram: z.string().max(100).optional(),
   plan: z.enum(["basico", "pro", "premium"]).default("pro"),
+  acceptedTerms: z.literal(true, {
+    message: "Debes aceptar los terminos y condiciones",
+  }),
 });
 
 export const ForgotPasswordSchema = z.object({

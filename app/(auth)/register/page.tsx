@@ -33,6 +33,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [form, setForm] = useState({
     tenantName: "",
     slug: "",
@@ -43,6 +44,7 @@ export default function RegisterPage() {
   });
 
   function handleGoogleSignUp() {
+    if (!acceptedTerms) return;
     setGoogleLoading(true);
     // El mismo botón sirve para crear cuenta o iniciar sesión: si el correo
     // de Google ya tiene barbería, entra directo; si no, el middleware lo
@@ -69,13 +71,17 @@ export default function RegisterPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!acceptedTerms) {
+      setError("Debes aceptar los términos y condiciones para continuar.");
+      return;
+    }
     setLoading(true);
     setError("");
 
     const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, acceptedTerms }),
     });
 
     const json = await response.json();
@@ -95,7 +101,8 @@ export default function RegisterPage() {
     form.name.trim().length > 1 &&
     form.email.trim().length > 3 &&
     form.password.length >= 8 &&
-    form.confirmPassword.length >= 8;
+    form.confirmPassword.length >= 8 &&
+    acceptedTerms;
 
   if (success) {
     return (
@@ -178,12 +185,44 @@ export default function RegisterPage() {
             </p>
           </div>
 
+          {/* TÉRMINOS */}
+          <label className="mb-5 flex cursor-pointer items-start gap-2.5 text-[12.5px] leading-snug text-zinc-500">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => setAcceptedTerms(event.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-zinc-900 accent-gold"
+            />
+            <span>
+              Acepto los{" "}
+              <Link
+                href="/terminos-y-condiciones"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold/90 underline underline-offset-2 transition hover:text-gold-light"
+              >
+                términos y condiciones
+              </Link>{" "}
+              y la{" "}
+              <Link
+                href="/politica-de-privacidad"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold/90 underline underline-offset-2 transition hover:text-gold-light"
+              >
+                política de privacidad
+              </Link>{" "}
+              de NAVA.
+            </span>
+          </label>
+
           {/* GOOGLE */}
           <button
             type="button"
             onClick={handleGoogleSignUp}
-            disabled={googleLoading}
-            className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.1] bg-white py-3 text-sm font-medium text-zinc-800 transition-all duration-200 hover:bg-zinc-100 active:scale-[0.98] disabled:opacity-60"
+            disabled={googleLoading || !acceptedTerms}
+            title={!acceptedTerms ? "Acepta los términos y condiciones primero" : undefined}
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.1] bg-white py-3 text-sm font-medium text-zinc-800 transition-all duration-200 hover:bg-zinc-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {googleLoading ? (
               <svg

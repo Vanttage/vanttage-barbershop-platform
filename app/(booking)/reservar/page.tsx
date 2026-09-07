@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useApi, useApiList, apiCall } from "@/src/hooks/useApi";
 import { formatCOP } from "@/src/types";
 import type {
@@ -739,6 +740,13 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
             </button>
             <p className="text-[11px] text-zinc-700 text-center mt-3">
               Podrás activar recordatorios por Telegram al confirmar tu cita
+            </p>
+            <p className="text-[10.5px] text-zinc-800 text-center mt-1.5">
+              Al confirmar, tus datos se usan solo para tu cita — ver{" "}
+              <Link href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-zinc-600">
+                política de privacidad
+              </Link>
+              .
             </p>
             <button
               onClick={() => setStep("fecha")}

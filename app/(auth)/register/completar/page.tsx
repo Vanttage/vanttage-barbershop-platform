@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { CheckCircle2, Phone, Scissors } from "lucide-react";
 
@@ -50,6 +51,7 @@ export default function CompleteGoogleRegistrationPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [form, setForm] = useState({ tenantName: "", slug: "", phone: "" });
 
   function handleNameChange(value: string) {
@@ -67,13 +69,17 @@ export default function CompleteGoogleRegistrationPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!acceptedTerms) {
+      setError("Debes aceptar los términos y condiciones para continuar.");
+      return;
+    }
     setLoading(true);
     setError("");
 
     const response = await fetch("/api/auth/register/google", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, acceptedTerms }),
     });
 
     const json = await response.json();
@@ -92,7 +98,8 @@ export default function CompleteGoogleRegistrationPage() {
     window.location.href = "/dashboard";
   }
 
-  const canSubmit = form.tenantName.trim().length > 1 && form.slug.trim().length > 1;
+  const canSubmit =
+    form.tenantName.trim().length > 1 && form.slug.trim().length > 1 && acceptedTerms;
 
   if (status === "loading") {
     return <PageShell><div /></PageShell>;
@@ -208,6 +215,37 @@ export default function CompleteGoogleRegistrationPage() {
               {error}
             </div>
           ) : null}
+
+          {/* TÉRMINOS */}
+          <label className="flex cursor-pointer items-start gap-2.5 text-[12.5px] leading-snug text-zinc-500">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => setAcceptedTerms(event.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-zinc-900 accent-gold"
+            />
+            <span>
+              Acepto los{" "}
+              <Link
+                href="/terminos-y-condiciones"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold/90 underline underline-offset-2 transition hover:text-gold-light"
+              >
+                términos y condiciones
+              </Link>{" "}
+              y la{" "}
+              <Link
+                href="/politica-de-privacidad"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold/90 underline underline-offset-2 transition hover:text-gold-light"
+              >
+                política de privacidad
+              </Link>{" "}
+              de NAVA.
+            </span>
+          </label>
 
           <button
             type="submit"
