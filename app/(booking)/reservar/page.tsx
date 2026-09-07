@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useApi, useApiList, apiCall } from "@/src/hooks/useApi";
 import { formatCOP } from "@/src/types";
@@ -140,10 +140,28 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
           tenantSlug ? `&tenantSlug=${encodeURIComponent(tenantSlug)}` : ""
         }`
       : "";
-  const { data: availability, loading: loadingSlots } =
+  const { data: availability, loading: loadingSlots, refetch: refetchAvailability } =
     useApi<AvailabilityResponse>(availabilityUrl);
   const slots = availability?.slots ?? [];
   const slotBarbers = availability?.slotBarbers ?? {};
+
+  // Mientras el cliente mira los horarios, alguien mas puede reservar uno.
+  // Refresca la disponibilidad sola cada 20s en ese paso, y si el horario
+  // que ya habia elegido desaparece de la lista, lo deselecciona — mejor
+  // que dejarlo avanzar con un horario que ya no existe.
+  useEffect(() => {
+    if (step !== "fecha" || !availabilityUrl) return;
+    const id = setInterval(() => refetchAvailability(), 20_000);
+    return () => clearInterval(id);
+  }, [step, availabilityUrl, refetchAvailability]);
+
+  useEffect(() => {
+    if (!availability || loadingSlots) return;
+    if (selectedTime && !slots.includes(selectedTime)) {
+      setSelectedTime(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availability, loadingSlots]);
 
   /** ¿Trabaja este barbero (o alguno, si es "sin preferencia") ese día de
    *  la semana? Chequeo liviano solo con el horario — no mira citas
@@ -181,6 +199,27 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
       return;
     }
 
+    // Revalida disponibilidad justo antes de reservar — puede pasar rato
+    // entre elegir la hora y terminar de llenar los datos, y alguien mas
+    // pudo tomarla mientras tanto. Mejor avisar aqui, antes de intentar
+    // crear la cita, que dejar que el POST falle con un 409 al final.
+    try {
+      const checkRes = await fetch(availabilityUrl, { cache: "no-store" });
+      const checkJson = await checkRes.json();
+      const freshSlots: string[] = checkJson?.data?.slots ?? [];
+      if (!freshSlots.includes(selectedTime)) {
+        setLoading(false);
+        setError("Ese horario se acaba de ocupar. Elige otro horario disponible.");
+        setSelectedTime(null);
+        setStep("fecha");
+        refetchAvailability();
+        return;
+      }
+    } catch {
+      // Si la revalidacion falla por red, seguimos — el POST de abajo
+      // igual protege contra el conflicto real con una respuesta 409.
+    }
+
     const [h, m] = selectedTime.split(":").map(Number);
     const startsAt = new Date(selectedDate);
     startsAt.setHours(h, m, 0, 0);
@@ -211,6 +250,14 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
     setLoading(false);
     if (apiError) {
       setError(apiError);
+      // Carrera real de ultimo momento (alguien reservo entre la revalidacion
+      // de arriba y este POST) — igual que antes, la devolvemos al selector
+      // de horario con la disponibilidad ya actualizada.
+      if (apiError.includes("Conflicto") || apiError.includes("ocupad") || apiError.includes("reservó")) {
+        setSelectedTime(null);
+        setStep("fecha");
+        refetchAvailability();
+      }
       return;
     }
     setConfirmedClientId(created?.clientId ?? null);
@@ -528,6 +575,24 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                 ¿Cuándo?
               </h2>
             </div>
+            {error && (
+              <div className="flex items-center gap-2 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2.5 mb-4">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#f87171"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span className="text-[12.5px] text-red-400">{error}</span>
+              </div>
+            )}
             <p className="text-[10.5px] text-zinc-600 uppercase tracking-[0.08em] font-medium mb-3">
               Fecha
             </p>
@@ -542,6 +607,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                     onClick={() => {
                       setSelectedDate(d);
                       setSelectedTime(null);
+                      setError("");
                     }}
                     className={`flex-shrink-0 w-14 py-3 rounded-xl border text-center transition-all ${isSel ? "bg-gold-subtle border-gold text-gold-light" : dayOk ? "bg-[#111113] border-white/[0.05] hover:border-gold-border" : "opacity-25 bg-zinc-900 border-white/[0.03] cursor-not-allowed"}`}
                   >
@@ -590,7 +656,10 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
                     {slots.map((h) => (
                       <button
                         key={h}
-                        onClick={() => setSelectedTime(h)}
+                        onClick={() => {
+                          setSelectedTime(h);
+                          setError("");
+                        }}
                         className={`py-2.5 rounded-lg border text-[13px] font-medium transition-all ${selectedTime === h ? "bg-gold-subtle border-gold text-gold-light" : "bg-[#111113] border-white/[0.05] text-zinc-500 hover:border-gold-border hover:text-zinc-200"}`}
                       >
                         {h}
