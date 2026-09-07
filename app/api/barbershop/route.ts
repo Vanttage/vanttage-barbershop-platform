@@ -22,7 +22,7 @@ export async function GET() {
   const [tenant, barbershop] = await Promise.all([
     prisma.tenant.findUnique({
       where: { id: ctx.tenantId },
-      select: { id: true, name: true, slug: true, plan: true },
+      select: { id: true, name: true, slug: true, plan: true, googlePlaceId: true },
     }),
     prisma.barbershop.findUnique({
       where: { id: ctx.barbershopId },
@@ -55,6 +55,7 @@ export async function GET() {
       tenantName: tenant.name,
       tenantSlug: tenant.slug,
       plan: tenant.plan,
+      googleReviewUrl: tenant.googlePlaceId,
       barbershopId: barbershop.id,
       barbershopName: barbershop.name,
       barbershopSlug: barbershop.slug,
@@ -97,6 +98,7 @@ export async function PATCH(request: Request) {
         name: parsed.data.tenantName.trim(),
         city: nullable(parsed.data.city),
         phoneWa: nullable(parsed.data.whatsapp),
+        googlePlaceId: nullable(parsed.data.googleReviewUrl),
       },
     });
 
@@ -139,6 +141,7 @@ export async function PATCH(request: Request) {
     data: {
       tenantName: parsed.data.tenantName.trim(),
       tenantSlug: ctx.tenantSlug,
+      googleReviewUrl: nullable(parsed.data.googleReviewUrl),
       barbershopId: updated.id,
       barbershopName: updated.name,
       barbershopSlug: updated.slug,

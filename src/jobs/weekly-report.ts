@@ -13,20 +13,31 @@ import { sendWeeklyReportEmail } from "@/src/lib/email";
 
 // ── Helpers de fecha ──────────────────────────────────────────────
 
+// Bogotá es UTC-5 todo el año (sin horario de verano). En Vercel el
+// servidor corre en UTC, así que `new Date().getDay()`/`setHours()` dan el
+// día y la hora equivocados cerca de los bordes de semana (p. ej. una cita
+// del domingo en la noche en Bogotá cae en el UTC del lunes). Para calcular
+// el rango lunes–domingo hay que razonar en hora Bogotá y solo al final
+// convertir a los instantes UTC reales que Prisma compara contra `startsAt`.
+const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000;
+
 function getWeekRange(weeksAgo = 0): { start: Date; end: Date } {
-  const now = new Date();
-  const day = now.getDay(); // 0=Dom
+  const nowBogota = new Date(Date.now() - BOGOTA_OFFSET_MS);
+  const day = nowBogota.getUTCDay(); // 0=Dom — campos UTC de un reloj ya desplazado a Bogotá
   const diff = day === 0 ? 6 : day - 1; // días desde el lunes
 
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - diff - weeksAgo * 7);
-  monday.setHours(0, 0, 0, 0);
+  const mondayBogota = new Date(nowBogota);
+  mondayBogota.setUTCDate(nowBogota.getUTCDate() - diff - weeksAgo * 7);
+  mondayBogota.setUTCHours(0, 0, 0, 0);
 
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
+  const sundayBogota = new Date(mondayBogota);
+  sundayBogota.setUTCDate(mondayBogota.getUTCDate() + 6);
+  sundayBogota.setUTCHours(23, 59, 59, 999);
 
-  return { start: monday, end: sunday };
+  return {
+    start: new Date(mondayBogota.getTime() + BOGOTA_OFFSET_MS),
+    end: new Date(sundayBogota.getTime() + BOGOTA_OFFSET_MS),
+  };
 }
 
 function formatCOPSimple(value: number): string {

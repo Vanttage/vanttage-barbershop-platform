@@ -53,6 +53,7 @@ type SettingsData = {
   instagram: string | null;
   openingTime: string | null;
   closingTime: string | null;
+  googleReviewUrl: string | null;
 };
 
 type FormData = {
@@ -65,9 +66,11 @@ type FormData = {
   city: string;
   country: string;
   phone: string;
+  whatsapp: string;
   instagram: string;
   openingTime: string;
   closingTime: string;
+  googleReviewUrl: string;
 };
 
 const FIELD_CLASS =
@@ -126,9 +129,11 @@ export default function ConfiguracionPage() {
     city: "",
     country: "Colombia",
     phone: "",
+    whatsapp: "",
     instagram: "",
     openingTime: "09:00",
     closingTime: "19:00",
+    googleReviewUrl: "",
   });
 
   useEffect(() => {
@@ -143,9 +148,11 @@ export default function ConfiguracionPage() {
       city: data.city ?? "",
       country: data.country ?? "Colombia",
       phone: data.phone ?? "",
+      whatsapp: data.whatsapp ?? "",
       instagram: data.instagram ?? "",
       openingTime: data.openingTime ?? "09:00",
       closingTime: data.closingTime ?? "19:00",
+      googleReviewUrl: data.googleReviewUrl ?? "",
     });
   }, [data]);
 
@@ -326,6 +333,13 @@ export default function ConfiguracionPage() {
                 </div>
                 <div>
                   <label className={LABEL_CLASS}>
+                    <InputIcon><Phone size={11} /></InputIcon>
+                    WhatsApp
+                  </label>
+                  <input value={form.whatsapp} onChange={set("whatsapp")} placeholder="+57 300 000 0000" className={FIELD_CLASS} />
+                </div>
+                <div>
+                  <label className={LABEL_CLASS}>
                     <InputIcon><AtSign size={11} /></InputIcon>
                     Instagram
                   </label>
@@ -382,6 +396,29 @@ export default function ConfiguracionPage() {
                     Banner URL
                   </label>
                   <input value={form.bannerUrl} onChange={set("bannerUrl")} placeholder="https://cdn.tuservicio.com/banner.jpg" className={FIELD_CLASS} />
+                </div>
+
+                {/* Divider */}
+                <div className="md:col-span-2 border-t border-white/[0.04] pt-4">
+                  <p className="mb-1 text-[10px] uppercase tracking-wider text-zinc-600">Reseñas de Google</p>
+                  <p className="mb-3 text-xs text-zinc-600">
+                    Pega aquí el link para escribir una reseña de tu negocio en Google — lo usamos
+                    para la automatización &quot;Solicitud de reseña&quot;. Lo encuentras en tu Perfil de
+                    Negocio de Google, en &quot;Pedir reseñas&quot; → &quot;Compartir formulario de reseña&quot;,
+                    o buscando tu barbería en Google Maps y copiando el link de &quot;Escribir una reseña&quot;.
+                  </p>
+                </div>
+                <div className="md:col-span-2">
+                  <label className={LABEL_CLASS}>
+                    <InputIcon><Globe size={11} /></InputIcon>
+                    Link de reseñas de Google
+                  </label>
+                  <input
+                    value={form.googleReviewUrl}
+                    onChange={set("googleReviewUrl")}
+                    placeholder="https://g.page/r/xxxxxxxxxxxxx/review"
+                    className={FIELD_CLASS}
+                  />
                 </div>
               </div>
             )}

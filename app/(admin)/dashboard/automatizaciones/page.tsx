@@ -44,6 +44,14 @@ const AUTOMATIONS: AutomationMeta[] = [
     minPlan: "basico",
   },
   {
+    key: "autoReviewRequest",
+    name: "Solicitud de reseña",
+    description: "Pide una reseña por Telegram después de completar el servicio.",
+    trigger: "1.5–2.5h después de completar la cita",
+    channel: "telegram",
+    minPlan: "pro",
+  },
+  {
     key: "autoReactivacion",
     name: "Reactivación de clientes",
     description: "¡Te echamos de menos! con descuento para clientes sin cita en 30 días.",

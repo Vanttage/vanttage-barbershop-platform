@@ -71,9 +71,9 @@ export default function Sidebar() {
         >
           {/* LOGO */}
           <img
-            src="/logo.svg"
+            src="/nava-logo-mark.jpg"
             alt="NAVA"
-            className="h-8 w-8 shrink-0 object-contain"
+            className="h-8 w-8 shrink-0 rounded-full object-cover"
           />
 
           {/* TEXTO */}
@@ -84,11 +84,8 @@ export default function Sidebar() {
             ].join(" ")}
           >
             <p
-              className="whitespace-nowrap font-display text-transparent bg-clip-text"
+              className="whitespace-nowrap font-display text-zinc-100"
               style={{
-                background: "linear-gradient(90deg, #1EA7FF, #D4AF37)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
                 fontSize: "16px",
                 fontWeight: 700,
                 letterSpacing: "0.14em",
@@ -171,4 +168,3 @@ export default function Sidebar() {
     </aside>
   );
 }
-``;

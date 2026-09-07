@@ -226,7 +226,7 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
     const { data, error: linkError } = await apiCall<{ telegramUrl: string }>(
       "/api/public/telegram-link",
       "POST",
-      { clientId: confirmedClientId },
+      { clientId: confirmedClientId, tenantSlug: tenantSlug || undefined },
     );
     setTelegramLoading(false);
     if (linkError || !data) {

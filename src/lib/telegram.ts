@@ -222,13 +222,12 @@ export function buildTelegramCompletedMessage(params: {
 export function buildTelegramReviewRequestMessage(params: {
   clientName: string;
   tenantName: string;
-  googlePlaceId: string;
+  googleReviewUrl: string;
 }): string {
-  const reviewUrl = `https://search.google.com/local/writereview?placeid=${params.googlePlaceId}`;
   return (
     `⭐ <b>¡Gracias por visitarnos, ${params.clientName}!</b>\n\n` +
     `¿Cómo te fue en <b>${params.tenantName}</b>? Tu opinión nos ayuda mucho 🙏\n\n` +
-    `Déjanos una reseña aquí 👇\n${reviewUrl}`
+    `Déjanos una reseña aquí 👇\n${params.googleReviewUrl}`
   );
 }
 

@@ -45,7 +45,7 @@ export default function UserMenu() {
             : "border-white/[0.08] hover:border-white/[0.14] hover:bg-white/[0.04]",
         ].join(" ")}
       >
-        <Avatar src={null} alt={session?.user.name ?? "?"} size="sm" />
+        <Avatar src={session?.user.image} alt={session?.user.name ?? "?"} size="sm" />
 
         <div className="hidden max-w-[120px] text-left sm:block">
           <p className="truncate text-[13.5px] font-medium text-zinc-200">
@@ -120,4 +120,3 @@ export default function UserMenu() {
     </div>
   );
 }
-``;

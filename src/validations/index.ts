@@ -164,6 +164,7 @@ export const UpdateBarbershopSettingsSchema = z.object({
   phone: z.string().max(20).optional(),
   whatsapp: z.string().max(20).optional(),
   instagram: z.string().max(100).optional(),
+  googleReviewUrl: optionalUrlSchema,
   openingTime: timeSchema,
   closingTime: timeSchema,
   logoUrl: optionalUrlSchema,

@@ -146,12 +146,14 @@ export async function runReminders(): Promise<{
   });
 
   for (const appt of apptsReview) {
+    // googlePlaceId guarda el link de reseñas de Google que el dueño pega en
+    // Configuración — sin él no hay a dónde mandar al cliente.
     if (!appt.tenant.googlePlaceId) continue;
 
     const text = buildTelegramReviewRequestMessage({
-      clientName:    appt.client.name,
-      tenantName:    appt.tenant.name,
-      googlePlaceId: appt.tenant.googlePlaceId,
+      clientName:      appt.client.name,
+      tenantName:      appt.tenant.name,
+      googleReviewUrl: appt.tenant.googlePlaceId,
     });
 
     const result = await sendTelegramMessage({ chatId: appt.client.telegramChatId!, text });
