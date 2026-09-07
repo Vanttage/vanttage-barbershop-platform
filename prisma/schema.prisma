@@ -64,6 +64,7 @@ enum NotificationType {
   payment_received
   marketing
   new_booking_alert
+  cancellation_alert
 }
 
 enum NotificationStatus {

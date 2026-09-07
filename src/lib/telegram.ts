@@ -137,6 +137,32 @@ export function buildTelegramOwnerWelcomeMessage(tenantName: string): string {
   );
 }
 
+/** Pregunta de confirmación antes de cancelar, enviada al cliente vía /cancelar. */
+export function buildTelegramCancelPromptMessage(params: {
+  serviceName: string;
+  barberName: string;
+  startsAt: Date | string;
+}): string {
+  const { fecha, hora } = formatFechaHora(params.startsAt);
+  return (
+    `¿Seguro que quieres cancelar tu cita del <b>${fecha}</b> a las <b>${hora}</b> ` +
+    `(${params.serviceName} con ${params.barberName})?\n\n` +
+    `Escribe /confirmar para cancelarla, o simplemente no respondas para conservarla.`
+  );
+}
+
+/** Aviso al dueño/barbero cuando el cliente cancela su propia cita por Telegram. */
+export function buildTelegramCancellationAlertMessage(params: {
+  clientName: string;
+  startsAt: Date | string;
+}): string {
+  const { fecha, hora } = formatFechaHora(params.startsAt);
+  return (
+    `❌ <b>Cita cancelada</b>\n\n` +
+    `${params.clientName} canceló su cita del ${fecha} a las ${hora}`
+  );
+}
+
 /** Aviso al dueño/barbero cuando un cliente reserva desde el booking público. */
 export function buildTelegramNewBookingMessage(params: {
   clientName: string;
