@@ -6,7 +6,14 @@ export const metadata = {
 
 const SECTIONS: { title: string; body: string[] }[] = [
   {
-    title: "1. Qué datos recopilamos",
+    title: "1. Responsable del tratamiento",
+    body: [
+      "VANTTAGE Tech, a través de la plataforma NAVA, es responsable del tratamiento de los datos personales que se describen en esta política.",
+      "Contacto para temas de datos personales: soporte@vanttagetech.com.",
+    ],
+  },
+  {
+    title: "2. Qué datos recopilamos",
     body: [
       "De quien registra una barbería: nombre, correo, teléfono y contraseña (o tu cuenta de Google).",
       "De los clientes de tu barbería: nombre, teléfono y, opcionalmente, correo — los que ellos mismos dan al reservar una cita.",
@@ -14,7 +21,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     ],
   },
   {
-    title: "2. Para qué los usamos",
+    title: "3. Para qué los usamos",
     body: [
       "Para operar el servicio: agendar citas, procesar pagos que registras, y enviar confirmaciones y recordatorios.",
       "Para las automatizaciones que actives: recordatorios por Telegram, solicitudes de reseña, reportes por correo.",
@@ -22,47 +29,47 @@ const SECTIONS: { title: string; body: string[] }[] = [
     ],
   },
   {
-    title: "3. Con quién los compartimos",
+    title: "4. Con quién los compartimos",
     body: [
       "Con proveedores que usamos para operar NAVA — Resend (envío de correos), Telegram (mensajería) y Supabase (base de datos) — solo en la medida necesaria para prestarte el servicio.",
       "Nunca vendemos ni compartimos tus datos ni los de tus clientes con terceros para fines comerciales.",
     ],
   },
   {
-    title: "4. Cómo los protegemos",
+    title: "5. Cómo los protegemos",
     body: [
       "Las contraseñas se guardan cifradas, nunca en texto plano.",
       "Cada barbería solo puede ver y acceder a su propia información — no hay acceso cruzado entre negocios distintos dentro de NAVA.",
     ],
   },
   {
-    title: "5. Tus derechos sobre tus datos",
+    title: "6. Tratamiento de datos personales (Habeas Data)",
     body: [
-      "Como dueño de tu barbería, puedes pedirnos en cualquier momento acceder, corregir o eliminar tu información y la de tu negocio.",
-      "Si eres cliente de una barbería que usa NAVA, puedes pedirle a esa barbería que corrija o elimine tus datos — ellos son quienes los recogieron y son responsables de esa relación contigo.",
-      "Esto aplica los derechos de acceso, corrección y eliminación de datos personales reconocidos por la Ley 1581 de 2012 (Colombia).",
+      "Como titular de tus datos personales, la Ley 1581 de 2012 (Colombia) te da derecho a: conocer, actualizar y rectificar tu información; solicitar prueba de la autorización que diste; ser informado sobre el uso que le hemos dado; revocar tu autorización y/o pedir que eliminemos tus datos cuando no exista un deber legal de conservarlos; y acceder gratuitamente a tus datos.",
+      "Si eres dueño de una barbería, ejerces estos derechos directamente con nosotros (soporte@vanttagetech.com). Si eres cliente de una barbería que usa NAVA, el responsable directo de tus datos es esa barbería — puedes pedírselo a ella, o escribirnos y te ponemos en contacto.",
+      "Si consideras que tus datos no se están tratando conforme a la ley, tienes derecho a presentar una queja ante la Superintendencia de Industria y Comercio (SIC), autoridad de protección de datos en Colombia.",
     ],
   },
   {
-    title: "6. Cookies",
+    title: "7. Cookies",
     body: [
       "Usamos solo las cookies necesarias para que la plataforma funcione: mantener tu sesión iniciada y recordar a qué barbería perteneces. No usamos cookies de rastreo publicitario.",
     ],
   },
   {
-    title: "7. Menores de edad",
+    title: "8. Menores de edad",
     body: [
       "NAVA no está dirigido a menores de edad. No recopilamos intencionalmente datos de menores de 18 años.",
     ],
   },
   {
-    title: "8. Cambios a esta política",
+    title: "9. Cambios a esta política",
     body: [
       "Podemos actualizar esta política ocasionalmente. Si el cambio es importante, te avisamos por correo o dentro de la plataforma.",
     ],
   },
   {
-    title: "9. Contacto",
+    title: "10. Contacto",
     body: [
       "¿Dudas sobre tus datos o esta política? Escríbenos a soporte@vanttagetech.com.",
     ],

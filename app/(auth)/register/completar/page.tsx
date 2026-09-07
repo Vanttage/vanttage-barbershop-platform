@@ -234,7 +234,7 @@ export default function CompleteGoogleRegistrationPage() {
               >
                 términos y condiciones
               </Link>{" "}
-              y la{" "}
+              y autorizo el tratamiento de mis datos personales conforme a la{" "}
               <Link
                 href="/politica-de-privacidad"
                 target="_blank"

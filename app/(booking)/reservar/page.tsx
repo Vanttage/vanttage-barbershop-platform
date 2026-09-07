@@ -742,7 +742,8 @@ export default function BookingPage({ tenantSlug }: BookingPageProps) {
               Podrás activar recordatorios por Telegram al confirmar tu cita
             </p>
             <p className="text-[10.5px] text-zinc-800 text-center mt-1.5">
-              Al confirmar, tus datos se usan solo para tu cita — ver{" "}
+              Al confirmar, autorizas el tratamiento de tus datos personales
+              para gestionar tu cita, conforme a nuestra{" "}
               <Link href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-zinc-600">
                 política de privacidad
               </Link>
