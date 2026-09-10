@@ -280,7 +280,7 @@ export default function ServiciosPage() {
 
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-5 sm:px-7 sm:py-6">
         {/* Metrics */}
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Activos", value: metrics.active, icon: Layers, color: "text-emerald-400" },
             { label: "Pausados", value: metrics.inactive, icon: Power, color: "text-zinc-500" },
@@ -303,13 +303,13 @@ export default function ServiciosPage() {
         <section className="overflow-hidden rounded-2xl border border-white/[0.05] bg-[#111113]">
           {/* Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.04] px-5 py-4">
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar servicio o categoria..."
-                className="w-72 rounded-lg border border-white/[0.06] bg-zinc-800/60 py-2 pl-8 pr-3 text-[12.5px] text-zinc-200 outline-none transition focus:border-gold-border placeholder:text-zinc-600"
+                className="w-full rounded-lg border border-white/[0.06] bg-zinc-800/60 py-2 pl-8 pr-3 text-[12.5px] text-zinc-200 outline-none transition focus:border-gold-border placeholder:text-zinc-600 sm:w-72"
               />
             </div>
             <button
@@ -322,8 +322,8 @@ export default function ServiciosPage() {
             </button>
           </div>
 
-          {/* Table header */}
-          <div className="grid grid-cols-[1.4fr_130px_110px_140px_130px_80px] gap-3 border-b border-white/[0.04] px-5 py-3">
+          {/* Table header (desktop) */}
+          <div className="hidden grid-cols-[1.4fr_130px_110px_140px_130px_80px] gap-3 border-b border-white/[0.04] px-5 py-3 md:grid">
             {["Servicio", "Categoria", "Duracion", "Precio", "Estado", ""].map((label) => (
               <div key={label} className="text-[10px] uppercase tracking-[0.12em] text-zinc-600">{label}</div>
             ))}
@@ -338,30 +338,112 @@ export default function ServiciosPage() {
             filtered.map((service) => (
               <div
                 key={service.id}
-                className="group grid grid-cols-[1.4fr_130px_110px_140px_130px_80px] items-center gap-3 border-b border-white/[0.03] px-5 py-4 transition hover:bg-zinc-800/20"
+                className="group border-b border-white/[0.03] transition hover:bg-zinc-800/20"
               >
-                <div>
-                  <div className="text-sm font-medium text-zinc-100">{service.name}</div>
-                  <div className="mt-0.5 line-clamp-1 text-xs text-zinc-600">
-                    {service.description || "Sin descripcion"}
+                {/* Desktop row */}
+                <div className="hidden grid-cols-[1.4fr_130px_110px_140px_130px_80px] items-center gap-3 px-5 py-4 md:grid">
+                  <div>
+                    <div className="text-sm font-medium text-zinc-100">{service.name}</div>
+                    <div className="mt-0.5 line-clamp-1 text-xs text-zinc-600">
+                      {service.description || "Sin descripcion"}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-zinc-400">
+                    <Tag size={11} className="text-zinc-600" />
+                    {service.category?.name ?? "General"}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-zinc-300">
+                    <Clock size={11} className="text-zinc-600" />
+                    {service.durationMin} min
+                  </div>
+                  <div className="text-sm font-semibold text-gold-light">
+                    {formatCOP(service.price)}
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => toggleActive(service)}
+                      className="flex items-center gap-1.5 transition"
+                      title={service.active ? "Pausar" : "Activar"}
+                    >
+                      {service.active ? (
+                        <>
+                          <ToggleRight size={18} className="text-emerald-400" />
+                          <span className="text-[11px] font-medium text-emerald-400">Activo</span>
+                        </>
+                      ) : (
+                        <>
+                          <ToggleLeft size={18} className="text-zinc-600" />
+                          <span className="text-[11px] font-medium text-zinc-500">Pausado</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(service)}
+                      title="Editar"
+                      className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDelete(service)}
+                      title="Desactivar"
+                      className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-red-400/10 hover:text-red-400"
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm text-zinc-400">
-                  <Tag size={11} className="text-zinc-600" />
-                  {service.category?.name ?? "General"}
-                </div>
-                <div className="flex items-center gap-1.5 text-sm text-zinc-300">
-                  <Clock size={11} className="text-zinc-600" />
-                  {service.durationMin} min
-                </div>
-                <div className="text-sm font-semibold text-gold-light">
-                  {formatCOP(service.price)}
-                </div>
-                <div>
+
+                {/* Mobile card */}
+                <div className="flex flex-col gap-2.5 px-4 py-3.5 md:hidden">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-zinc-100">{service.name}</div>
+                      <div className="mt-0.5 line-clamp-1 text-xs text-zinc-600">
+                        {service.description || "Sin descripcion"}
+                      </div>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(service)}
+                        title="Editar"
+                        className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openDelete(service)}
+                        title="Desactivar"
+                        className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-red-400/10 hover:text-red-400"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <div className="flex items-center gap-3 text-zinc-400">
+                      <span className="flex items-center gap-1">
+                        <Tag size={11} className="text-zinc-600" />
+                        {service.category?.name ?? "General"}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock size={11} className="text-zinc-600" />
+                        {service.durationMin} min
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gold-light">{formatCOP(service.price)}</span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => toggleActive(service)}
-                    className="flex items-center gap-1.5 transition"
+                    className="flex items-center gap-1.5 self-start transition"
                     title={service.active ? "Pausar" : "Activar"}
                   >
                     {service.active ? (
@@ -375,24 +457,6 @@ export default function ServiciosPage() {
                         <span className="text-[11px] font-medium text-zinc-500">Pausado</span>
                       </>
                     )}
-                  </button>
-                </div>
-                <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <button
-                    type="button"
-                    onClick={() => openEdit(service)}
-                    title="Editar"
-                    className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200"
-                  >
-                    <Pencil size={13} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openDelete(service)}
-                    title="Desactivar"
-                    className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-red-400/10 hover:text-red-400"
-                  >
-                    <Trash2 size={13} />
                   </button>
                 </div>
               </div>

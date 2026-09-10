@@ -528,8 +528,8 @@ export default function ClientesPage() {
               </div>
             ) : null}
 
-            {/* Table header */}
-            <div className="grid grid-cols-[1fr_150px_70px_90px_40px] gap-3 border-b border-white/[0.04] px-5 py-2.5">
+            {/* Table header (desktop) */}
+            <div className="hidden grid-cols-[1fr_150px_70px_90px_40px] gap-3 border-b border-white/[0.04] px-5 py-2.5 sm:grid">
               {["Cliente", "Telefono", "Visitas", "Estado", ""].map((h) => (
                 <div key={h} className="text-[10px] uppercase tracking-wider text-zinc-600 font-medium">{h}</div>
               ))}
@@ -551,28 +551,52 @@ export default function ClientesPage() {
                     <div
                       key={c.id}
                       onClick={() => setSelected(isSelected ? null : c)}
-                      className={`grid cursor-pointer grid-cols-[1fr_150px_70px_90px_40px] items-center gap-3 border-b border-white/[0.03] px-5 py-3 transition-colors ${
+                      className={`cursor-pointer border-b border-white/[0.03] transition-colors ${
                         isSelected ? "bg-gold-subtle" : "hover:bg-zinc-800/30"
                       }`}
                     >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/[0.07] bg-zinc-700 text-[10.5px] font-medium text-zinc-400">
+                      {/* Desktop row */}
+                      <div className="hidden grid-cols-[1fr_150px_70px_90px_40px] items-center gap-3 px-5 py-3 sm:grid">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-white/[0.07] bg-zinc-700 text-[10.5px] font-medium text-zinc-400">
+                            {getInitials(c.name)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate text-[13px] font-medium text-zinc-100">{c.name}</div>
+                            <div className="truncate text-[10.5px] text-zinc-600">{c.email ?? "—"}</div>
+                          </div>
+                        </div>
+                        <div className="text-[12.5px] tabular-nums text-zinc-400">{c.phone}</div>
+                        <div className="text-[13px] font-semibold tabular-nums text-zinc-200">{c.totalVisits}</div>
+                        <div>
+                          <span className={`rounded-full border px-2 py-0.5 text-[10.5px] font-medium ${tag.color} ${tag.bg} ${tag.border}`}>
+                            {tag.label}
+                          </span>
+                        </div>
+                        <div className="flex justify-end">
+                          <ChevronRight size={13} className={`transition-colors ${isSelected ? "text-gold-light" : "text-zinc-700"}`} />
+                        </div>
+                      </div>
+
+                      {/* Mobile card */}
+                      <div className="flex items-center gap-3 px-4 py-3 sm:hidden">
+                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/[0.07] bg-zinc-700 text-[10.5px] font-medium text-zinc-400">
                           {getInitials(c.name)}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="truncate text-[13px] font-medium text-zinc-100">{c.name}</div>
-                          <div className="truncate text-[10.5px] text-zinc-600">{c.email ?? "—"}</div>
+                          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-zinc-500">
+                            <span className="tabular-nums">{c.phone}</span>
+                            <span className="text-zinc-700">·</span>
+                            <span className="tabular-nums">{c.totalVisits} visitas</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-[12.5px] tabular-nums text-zinc-400">{c.phone}</div>
-                      <div className="text-[13px] font-semibold tabular-nums text-zinc-200">{c.totalVisits}</div>
-                      <div>
-                        <span className={`rounded-full border px-2 py-0.5 text-[10.5px] font-medium ${tag.color} ${tag.bg} ${tag.border}`}>
-                          {tag.label}
-                        </span>
-                      </div>
-                      <div className="flex justify-end">
-                        <ChevronRight size={13} className={`transition-colors ${isSelected ? "text-gold-light" : "text-zinc-700"}`} />
+                        <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${tag.color} ${tag.bg} ${tag.border}`}>
+                            {tag.label}
+                          </span>
+                          <ChevronRight size={13} className={`transition-colors ${isSelected ? "text-gold-light" : "text-zinc-700"}`} />
+                        </div>
                       </div>
                     </div>
                   );

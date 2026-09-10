@@ -512,13 +512,13 @@ export default function SuperAdminPage() {
         <div className="rounded-xl border border-white/[0.04] bg-[#111113]">
           {/* Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.04] px-5 py-4">
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar barberia, slug o email..."
-                className="w-72 rounded-lg border border-white/[0.06] bg-zinc-800/60 py-2 pl-8 pr-3 text-[12.5px] text-zinc-200 outline-none transition focus:border-gold-border placeholder:text-zinc-600"
+                className="w-full rounded-lg border border-white/[0.06] bg-zinc-800/60 py-2 pl-8 pr-3 text-[12.5px] text-zinc-200 outline-none transition focus:border-gold-border placeholder:text-zinc-600 sm:w-72"
               />
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -561,8 +561,8 @@ export default function SuperAdminPage() {
             </div>
           </div>
 
-          {/* Table head */}
-          <div className="grid grid-cols-[1fr_110px_70px_80px_100px_100px_80px_100px] gap-3 border-b border-white/[0.04] px-5 py-3">
+          {/* Table head (desktop) */}
+          <div className="hidden grid-cols-[1fr_110px_70px_80px_100px_100px_80px_100px] gap-3 border-b border-white/[0.04] px-5 py-3 xl:grid">
             {["Barberia", "Plan", "Barberos", "Clientes", "Citas", "Ingreso potencial", "Estado", ""].map((h) => (
               <div key={h} className="text-[10px] uppercase tracking-wider text-zinc-600 font-medium">{h}</div>
             ))}
@@ -583,45 +583,94 @@ export default function SuperAdminPage() {
               return (
                 <div
                   key={t.id}
-                  className="grid grid-cols-[1fr_110px_70px_80px_100px_100px_80px_100px] items-center gap-3 border-b border-white/[0.03] px-5 py-4 transition hover:bg-zinc-800/20"
+                  className="border-b border-white/[0.03] transition hover:bg-zinc-800/20"
                 >
-                  {/* Name */}
-                  <button
-                    type="button"
-                    onClick={() => setDetailTenantId(t.id)}
-                    className="flex min-w-0 items-center gap-3 text-left"
-                  >
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-gold-border bg-[#2A2116] text-[10px] font-bold text-gold-light">
-                      {t.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="truncate text-[13px] font-medium text-zinc-100 hover:underline">{t.name}</div>
-                      <div className="text-[10.5px] text-zinc-600">{t.slug}.vanttage.app</div>
-                    </div>
-                  </button>
-                  <div><PlanBadge plan={t.plan} /></div>
-                  <div className="tabular-nums text-[13px] font-medium text-zinc-300">{t._count.barbers}</div>
-                  <div className="tabular-nums text-[13px] font-medium text-zinc-300">{t._count.clients}</div>
-                  <div className="tabular-nums text-[13px] font-medium text-zinc-300">{t._count.appointments}</div>
-                  <div className="tabular-nums text-[12.5px] font-medium text-gold-light">{formatCOP(plan.price)}/mes</div>
-                  <div>
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-medium ${
-                        t.active
-                          ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-400"
-                          : "border-white/[0.06] bg-zinc-800/60 text-zinc-600"
-                      }`}
+                  {/* Desktop row */}
+                  <div className="hidden grid-cols-[1fr_110px_70px_80px_100px_100px_80px_100px] items-center gap-3 px-5 py-4 xl:grid">
+                    <button
+                      type="button"
+                      onClick={() => setDetailTenantId(t.id)}
+                      className="flex min-w-0 items-center gap-3 text-left"
                     >
-                      <span className={`h-1.5 w-1.5 rounded-full ${t.active ? "bg-emerald-400" : "bg-zinc-600"}`} />
-                      {t.active ? "Activa" : "Inactiva"}
-                    </span>
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-gold-border bg-[#2A2116] text-[10px] font-bold text-gold-light">
+                        {t.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-[13px] font-medium text-zinc-100 hover:underline">{t.name}</div>
+                        <div className="text-[10.5px] text-zinc-600">{t.slug}.vanttage.app</div>
+                      </div>
+                    </button>
+                    <div><PlanBadge plan={t.plan} /></div>
+                    <div className="tabular-nums text-[13px] font-medium text-zinc-300">{t._count.barbers}</div>
+                    <div className="tabular-nums text-[13px] font-medium text-zinc-300">{t._count.clients}</div>
+                    <div className="tabular-nums text-[13px] font-medium text-zinc-300">{t._count.appointments}</div>
+                    <div className="tabular-nums text-[12.5px] font-medium text-gold-light">{formatCOP(plan.price)}/mes</div>
+                    <div>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-medium ${
+                          t.active
+                            ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-400"
+                            : "border-white/[0.06] bg-zinc-800/60 text-zinc-600"
+                        }`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${t.active ? "bg-emerald-400" : "bg-zinc-600"}`} />
+                        {t.active ? "Activa" : "Inactiva"}
+                      </span>
+                    </div>
+                    <div className="flex justify-end">
+                      <TenantActions
+                        tenant={t}
+                        onUpdated={refetch}
+                        onDeleteRequested={() => setDeleteTarget(t)}
+                      />
+                    </div>
                   </div>
-                  <div className="flex justify-end">
-                    <TenantActions
-                      tenant={t}
-                      onUpdated={refetch}
-                      onDeleteRequested={() => setDeleteTarget(t)}
-                    />
+
+                  {/* Mobile/tablet card */}
+                  <div className="flex flex-col gap-3 px-4 py-4 xl:hidden">
+                    <div className="flex items-start justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDetailTenantId(t.id)}
+                        className="flex min-w-0 items-center gap-3 text-left"
+                      >
+                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-gold-border bg-[#2A2116] text-[10px] font-bold text-gold-light">
+                          {t.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="truncate text-[13px] font-medium text-zinc-100 hover:underline">{t.name}</div>
+                          <div className="truncate text-[10.5px] text-zinc-600">{t.slug}.vanttage.app</div>
+                        </div>
+                      </button>
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-medium ${
+                            t.active
+                              ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-400"
+                              : "border-white/[0.06] bg-zinc-800/60 text-zinc-600"
+                          }`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${t.active ? "bg-emerald-400" : "bg-zinc-600"}`} />
+                          {t.active ? "Activa" : "Inactiva"}
+                        </span>
+                        <TenantActions
+                          tenant={t}
+                          onUpdated={refetch}
+                          onDeleteRequested={() => setDeleteTarget(t)}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <PlanBadge plan={t.plan} />
+                        <span className="text-[12px] font-medium text-gold-light">{formatCOP(plan.price)}/mes</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11.5px] text-zinc-500">
+                        <span><strong className="text-zinc-300">{t._count.barbers}</strong> barberos</span>
+                        <span><strong className="text-zinc-300">{t._count.clients}</strong> clientes</span>
+                        <span><strong className="text-zinc-300">{t._count.appointments}</strong> citas</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );

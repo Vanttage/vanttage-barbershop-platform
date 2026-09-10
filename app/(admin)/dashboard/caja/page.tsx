@@ -497,7 +497,7 @@ export default function CajaPage() {
 
       <main className="mx-auto flex w-full max-w-[1000px] flex-1 flex-col gap-5 px-4 py-5 sm:px-7 sm:py-6">
         {loading ? (
-          <div className="grid gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-24 animate-pulse rounded-xl bg-zinc-800/40" />
             ))}
@@ -602,18 +602,18 @@ export default function CajaPage() {
                   const isPositive = entry.amount > 0;
                   return (
                     <div key={entry.id} className="flex items-center justify-between gap-3 border-b border-white/[0.03] px-5 py-3 last:border-b-0">
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isPositive ? "bg-emerald-400/10 text-emerald-400" : "bg-red-400/10 text-red-400"}`}>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${isPositive ? "bg-emerald-400/10 text-emerald-400" : "bg-red-400/10 text-red-400"}`}>
                           {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                         </div>
-                        <div>
-                          <div className="text-[13px] font-medium text-zinc-100">{entry.label}</div>
-                          <div className="text-[11px] text-zinc-500">
+                        <div className="min-w-0">
+                          <div className="truncate text-[13px] font-medium text-zinc-100">{entry.label}</div>
+                          <div className="truncate text-[11px] text-zinc-500">
                             {entry.sublabel} · {new Date(entry.time).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="flex-shrink-0 text-right">
                         <div className={`text-sm font-semibold tabular-nums ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
                           {isPositive ? "+" : ""}{formatCOP(entry.amount)}
                         </div>
@@ -660,16 +660,16 @@ function HistoryList({ sessions, pages }: { sessions: CashSessionData[]; pages: 
       {closed.map((s) => {
         const ok = (s.difference ?? 0) === 0;
         return (
-          <div key={s.id} className="flex items-center justify-between gap-3 border-b border-white/[0.03] px-5 py-3.5 last:border-b-0">
-            <div>
-              <div className="text-[13px] font-medium text-zinc-100">
+          <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.03] px-5 py-3.5 last:border-b-0">
+            <div className="min-w-0">
+              <div className="truncate text-[13px] font-medium text-zinc-100">
                 {new Date(s.openedAt).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
               </div>
-              <div className="text-[11px] text-zinc-500">
+              <div className="truncate text-[11px] text-zinc-500">
                 Esperado {formatCOP(s.expectedCash ?? 0)} · Contado {formatCOP(s.countedCash ?? 0)}
               </div>
             </div>
-            <div className="flex items-center gap-1.5 text-[12px] font-medium">
+            <div className="flex flex-shrink-0 items-center gap-1.5 text-[12px] font-medium">
               {ok ? (
                 <span className="flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-emerald-400">
                   <CheckCircle2 size={11} /> Cuadrada

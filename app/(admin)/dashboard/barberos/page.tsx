@@ -302,7 +302,7 @@ function ScheduleModal({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#18181C] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
+        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-4 sm:px-6">
           <div>
             <h2 className="font-display text-base font-semibold text-zinc-100">
               Horario de {barber.name.split(" ")[0]}
@@ -316,13 +316,13 @@ function ScheduleModal({
           </button>
         </div>
 
-        <div className="flex flex-col gap-2 p-6">
+        <div className="flex flex-col gap-2 p-4 sm:p-6">
           {DISPLAY_ORDER.map((dayOfWeek) => {
             const day = days.find((d) => d.dayOfWeek === dayOfWeek)!;
             return (
               <div
                 key={dayOfWeek}
-                className={`flex items-center gap-3 rounded-xl border px-3.5 py-2.5 transition ${
+                className={`flex flex-col gap-2 rounded-xl border px-3.5 py-2.5 transition sm:flex-row sm:items-center sm:gap-3 ${
                   day.isAvailable
                     ? "border-white/[0.06] bg-zinc-800/40"
                     : "border-white/[0.03] bg-zinc-900/40"
@@ -331,7 +331,7 @@ function ScheduleModal({
                 <button
                   type="button"
                   onClick={() => updateDay(dayOfWeek, { isAvailable: !day.isAvailable })}
-                  className="flex w-24 flex-shrink-0 items-center gap-2 text-left"
+                  className="flex w-full flex-shrink-0 items-center gap-2 text-left sm:w-24"
                 >
                   <span
                     className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${
@@ -344,23 +344,23 @@ function ScheduleModal({
                 </button>
 
                 {day.isAvailable ? (
-                  <div className="flex flex-1 items-center gap-2">
+                  <div className="flex items-center gap-2 sm:flex-1">
                     <input
                       type="time"
                       value={day.startTime}
                       onChange={(e) => updateDay(dayOfWeek, { startTime: e.target.value })}
-                      className="flex-1 rounded-lg border border-white/[0.06] bg-zinc-900/60 px-2.5 py-1.5 text-[12.5px] text-zinc-200 outline-none focus:border-gold-border"
+                      className="w-0 flex-1 rounded-lg border border-white/[0.06] bg-zinc-900/60 px-2.5 py-1.5 text-[12.5px] text-zinc-200 outline-none focus:border-gold-border"
                     />
                     <span className="text-zinc-600">—</span>
                     <input
                       type="time"
                       value={day.endTime}
                       onChange={(e) => updateDay(dayOfWeek, { endTime: e.target.value })}
-                      className="flex-1 rounded-lg border border-white/[0.06] bg-zinc-900/60 px-2.5 py-1.5 text-[12.5px] text-zinc-200 outline-none focus:border-gold-border"
+                      className="w-0 flex-1 rounded-lg border border-white/[0.06] bg-zinc-900/60 px-2.5 py-1.5 text-[12.5px] text-zinc-200 outline-none focus:border-gold-border"
                     />
                   </div>
                 ) : (
-                  <span className="flex-1 text-[12.5px] text-zinc-600">Descanso</span>
+                  <span className="text-[12.5px] text-zinc-600 sm:flex-1">Descanso</span>
                 )}
               </div>
             );
@@ -368,13 +368,13 @@ function ScheduleModal({
         </div>
 
         {error && (
-          <div className="mx-6 mb-4 flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300">
+          <div className="mx-4 mb-4 flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300 sm:mx-6">
             <AlertTriangle size={14} />
             {error}
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-white/[0.06] px-6 py-4">
+        <div className="flex gap-3 border-t border-white/[0.06] px-4 py-4 sm:px-6">
           <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm text-zinc-400 transition hover:border-white/[0.16] hover:text-zinc-200">
             Cancelar
           </button>
@@ -595,7 +595,7 @@ export default function BarberosPage() {
 
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-5 sm:px-7 sm:py-6">
         {/* Metrics */}
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Activos", value: metrics.active, icon: Users, color: "text-emerald-400" },
             { label: "Inactivos", value: metrics.inactive, icon: Power, color: "text-zinc-500" },

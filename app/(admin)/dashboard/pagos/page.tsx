@@ -310,7 +310,7 @@ export default function PagosPage() {
 
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-5 sm:px-7 sm:py-6">
         {/* Metrics */}
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Cobrados", value: metrics.paid, icon: CheckCircle, color: "text-emerald-400" },
             { label: "Pendientes", value: metrics.pending, icon: Clock, color: "text-amber-400" },
@@ -333,12 +333,12 @@ export default function PagosPage() {
         <section className="overflow-hidden rounded-2xl border border-white/[0.05] bg-[#111113]">
           {/* Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.04] px-5 py-4">
-            <div className="flex items-center gap-2">
-              <Filter size={13} className="text-zinc-600" />
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+              <Filter size={13} className="hidden flex-shrink-0 text-zinc-600 sm:block" />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded-lg border border-white/[0.06] bg-zinc-800/60 px-3 py-2 text-[12px] text-zinc-400 outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-zinc-800/60 px-3 py-2 text-[12px] text-zinc-400 outline-none sm:flex-none"
               >
                 <option value="all">Todos los estados</option>
                 {Object.entries(STATUS_CONFIG_PAY).map(([v, { label }]) => (
@@ -348,7 +348,7 @@ export default function PagosPage() {
               <select
                 value={filterMethod}
                 onChange={(e) => setFilterMethod(e.target.value)}
-                className="rounded-lg border border-white/[0.06] bg-zinc-800/60 px-3 py-2 text-[12px] text-zinc-400 outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-zinc-800/60 px-3 py-2 text-[12px] text-zinc-400 outline-none sm:flex-none"
               >
                 <option value="all">Todos los metodos</option>
                 {Object.entries(METHOD_CONFIG).map(([v, { label }]) => (
@@ -367,8 +367,8 @@ export default function PagosPage() {
             </button>
           </div>
 
-          {/* Table header */}
-          <div className="grid grid-cols-[1fr_160px_140px_110px_100px_130px] gap-3 border-b border-white/[0.04] px-5 py-3">
+          {/* Table header (desktop) */}
+          <div className="hidden grid-cols-[1fr_160px_140px_110px_100px_130px] gap-3 border-b border-white/[0.04] px-5 py-3 lg:grid">
             {["Cliente y cita", "Metodo", "Monto", "Estado", "Fecha", ""].map((label) => (
               <div key={label} className="text-[10px] uppercase tracking-[0.12em] text-zinc-600">{label}</div>
             ))}
@@ -386,45 +386,93 @@ export default function PagosPage() {
               return (
                 <div
                   key={payment.id}
-                  className="grid grid-cols-[1fr_160px_140px_110px_100px_130px] items-center gap-3 border-b border-white/[0.03] px-5 py-4 transition hover:bg-zinc-800/20"
+                  className="border-b border-white/[0.03] transition hover:bg-zinc-800/20"
                 >
-                  <div>
-                    <div className="text-sm font-medium text-zinc-100">{payment.client.name}</div>
-                    <div className="mt-0.5 text-xs text-zinc-500">
-                      {payment.appointment.service.name} · {payment.appointment.barber.name}
+                  {/* Desktop row */}
+                  <div className="hidden grid-cols-[1fr_160px_140px_110px_100px_130px] items-center gap-3 px-5 py-4 lg:grid">
+                    <div>
+                      <div className="text-sm font-medium text-zinc-100">{payment.client.name}</div>
+                      <div className="mt-0.5 text-xs text-zinc-500">
+                        {payment.appointment.service.name} · {payment.appointment.barber.name}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {methodCfg ? (
+                        <>
+                          <span className={methodCfg.color}>{methodCfg.icon}</span>
+                          <div>
+                            <div className="text-sm text-zinc-300">{methodCfg.label}</div>
+                            {payment.reference && (
+                              <div className="text-xs text-zinc-600">Ref. {payment.reference}</div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="text-sm text-zinc-600">Sin definir</span>
+                      )}
+                    </div>
+                    <div className="text-sm font-semibold text-gold-light">{formatCOP(payment.amount)}</div>
+                    <div>
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10.5px] font-medium ${statusCfg?.color} ${statusCfg?.bg} ${statusCfg?.border}`}>
+                        {statusCfg?.icon}
+                        {statusCfg?.label ?? payment.status}
+                      </span>
+                    </div>
+                    <div className="text-sm text-zinc-500">
+                      {new Date(payment.paidAt ?? payment.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
+                    </div>
+                    <div>
+                      {payment.status === "pending" && (
+                        <button
+                          type="button"
+                          onClick={() => setPayingId(payment.id)}
+                          className="flex items-center gap-1.5 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 text-[11.5px] font-medium text-emerald-300 transition hover:bg-emerald-400/20"
+                        >
+                          <Wallet size={12} />
+                          Registrar pago
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {methodCfg ? (
-                      <>
-                        <span className={methodCfg.color}>{methodCfg.icon}</span>
-                        <div>
-                          <div className="text-sm text-zinc-300">{methodCfg.label}</div>
-                          {payment.reference && (
-                            <div className="text-xs text-zinc-600">Ref. {payment.reference}</div>
-                          )}
+
+                  {/* Mobile/tablet card */}
+                  <div className="flex flex-col gap-2.5 px-4 py-3.5 lg:hidden">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium text-zinc-100">{payment.client.name}</div>
+                        <div className="mt-0.5 truncate text-xs text-zinc-500">
+                          {payment.appointment.service.name} · {payment.appointment.barber.name}
                         </div>
-                      </>
-                    ) : (
-                      <span className="text-sm text-zinc-600">Sin definir</span>
-                    )}
-                  </div>
-                  <div className="text-sm font-semibold text-gold-light">{formatCOP(payment.amount)}</div>
-                  <div>
-                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10.5px] font-medium ${statusCfg?.color} ${statusCfg?.bg} ${statusCfg?.border}`}>
-                      {statusCfg?.icon}
-                      {statusCfg?.label ?? payment.status}
-                    </span>
-                  </div>
-                  <div className="text-sm text-zinc-500">
-                    {new Date(payment.paidAt ?? payment.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
-                  </div>
-                  <div>
+                      </div>
+                      <span className="flex-shrink-0 text-sm font-semibold text-gold-light">
+                        {formatCOP(payment.amount)}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-xs text-zinc-500">
+                        {methodCfg ? (
+                          <span className="flex items-center gap-1">
+                            <span className={methodCfg.color}>{methodCfg.icon}</span>
+                            {methodCfg.label}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-600">Sin definir</span>
+                        )}
+                        <span className="text-zinc-700">·</span>
+                        <span>
+                          {new Date(payment.paidAt ?? payment.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
+                        </span>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10.5px] font-medium ${statusCfg?.color} ${statusCfg?.bg} ${statusCfg?.border}`}>
+                        {statusCfg?.icon}
+                        {statusCfg?.label ?? payment.status}
+                      </span>
+                    </div>
                     {payment.status === "pending" && (
                       <button
                         type="button"
                         onClick={() => setPayingId(payment.id)}
-                        className="flex items-center gap-1.5 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 text-[11.5px] font-medium text-emerald-300 transition hover:bg-emerald-400/20"
+                        className="flex items-center justify-center gap-1.5 self-start rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1.5 text-[11.5px] font-medium text-emerald-300 transition hover:bg-emerald-400/20"
                       >
                         <Wallet size={12} />
                         Registrar pago
